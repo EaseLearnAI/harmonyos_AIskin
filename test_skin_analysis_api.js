@@ -9,9 +9,14 @@ const axios = require('axios')
 const https = require('https')
 
 // 配置
-const API_BASE_URL = 'https://www.lunzo.site/api'
-const TEST_PHONE = '15691887650'
-const TEST_PASSWORD = '12345678'
+const API_BASE_URL = process.env.API_BASE_URL || 'https://www.lunzo.site/api'
+const TEST_PHONE = process.env.TEST_PHONE
+const TEST_PASSWORD = process.env.TEST_PASSWORD
+
+if (!TEST_PHONE || !TEST_PASSWORD) {
+  console.error('请通过环境变量 TEST_PHONE / TEST_PASSWORD 提供测试账号，不要在脚本中硬编码。')
+  process.exit(1)
+}
 
 // 颜色输出
 const colors = {
