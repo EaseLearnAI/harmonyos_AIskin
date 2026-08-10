@@ -136,6 +136,14 @@ export struct SkinDetectionWelcome {
         color: '#F3F4F6',
         style: BorderStyle.Solid
       })
+
+      // AI Processing Notice
+      Text('拍摄或选择的照片将上传至 AI 引擎用于肌肤分析，分析结果仅供护肤参考，不作为医疗诊断依据。继续操作即表示你了解并同意本次分析。')
+        .fontSize(11)
+        .fontColor('#9CA3AF')
+        .lineHeight(16)
+        .textAlign(TextAlign.Center)
+        .margin({ top: 12 })
     }
     .width('100%')
     .padding(24)
