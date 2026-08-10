@@ -3,21 +3,23 @@
 - 仓库：`EaseLearnAI/harmonyos_AIskin`
 - 审计分支：`codex/app-store-readiness`（从 `main` 新建，`main` 目前只有 1 个提交）
 - 审计范围：源码与仓库安全审计。**本次不进行 AppGallery 提交**，也未生成签名 Release HAP（见文末说明）。
-- 审计日期：2026-08-10
+- 审计日期：2026-08-10（当前代码问题已在本分支修复，详见文末"整改记录"）
 
 ---
 
-## 结论速览
+## 结论速览（整改后）
 
-| 检查项 | 结论 |
-|---|---|
-| 移除 READ_IMAGEVIDEO，改用系统 PhotoViewPicker | ✅ 通过 |
-| AI 生成内容标识 | ⚠️ 部分通过（有标签，无逐次同意/无结果页免责声明） |
-| 非医疗声明 | ⚠️ 部分通过（仅存在于注册页条款全文，结果页未复现） |
-| 隐私政策 / 用户协议 | ⚠️ 部分通过（注册时展示，登录后无法再次查看） |
-| 注销（删除账户）入口 | ❌ 不存在 |
-| 证书 / 私钥 / 签名密码残留 | 🔴 严重：当前代码中即存在 |
-| build 产物 / node_modules 残留 | 🔴 严重：当前代码中即存在 |
+| 检查项 | 原始结论 | 当前状态 |
+|---|---|---|
+| 移除 READ_IMAGEVIDEO，改用系统 PhotoViewPicker | ✅ 通过 | ✅ 通过（未改动，本来就合规） |
+| AI 生成内容标识 | ⚠️ 部分通过 | ✅ 已在结果页/拍照前补充说明 |
+| 非医疗声明 | ⚠️ 部分通过 | ✅ 已在结果页复现免责声明 |
+| 隐私政策 / 用户协议 | ⚠️ 部分通过 | ✅ 已加入登录后设置页入口 |
+| 注销（删除账户）入口 | ❌ 不存在 | ❌ **仍不存在**，需要后端支持，见文末说明 |
+| 证书 / 私钥 / 签名密码残留 | 🔴 严重：当前代码中即存在 | ✅ 已从当前代码中移除/清空 |
+| build 产物 / node_modules 残留 | 🔴 严重：当前代码中即存在 | ✅ 已取消跟踪并加入 .gitignore |
+
+以下第 1-6 节保留审计发现时的原始记录（问题描述与证据不变），第 7 节新增"整改记录"说明具体改了什么、为什么、以及哪些问题没有改、原因是什么。
 | 签名 Release HAP | ❌ 未生成，本环境不具备 DevEco Studio / HarmonyOS SDK |
 
 ---
@@ -189,4 +191,42 @@ f420059 Initial commit: HarmonyOS AI Skin Analysis Project
 | 🟢 低 | `.DS_Store` 等无关文件被跟踪 | 多处 |
 | 🟢 低 | 文档仍引用已废弃的 READ_IMAGEVIDEO 方案，易误导后续开发 | `doc/相册.md` 等 |
 
-以上问题均为**发现与记录**，本次未做任何修改/删除/历史重写操作，是否整改、以何种方式整改（尤其是证书轮换与历史重写这类不可逆操作）需用户明确授权后再执行。
+以上问题在审计当次均为**发现与记录**，未做修改。经用户确认后，本分支已完成下方"整改记录"中列出的、风险可控的当前代码级修复；证书轮换与 Git 历史重写仍未执行（原因见 7.3）。
+
+---
+
+## 7. 整改记录（2026-08-10，同一分支追加提交）
+
+### 7.1 已修复（当前代码问题）
+
+| 问题 | 处理方式 | 提交 |
+|---|---|---|
+| 私钥/证书/签名 Profile 提交到仓库 | `git rm -r doc/password/AIskin3/`，彻底从当前树移除 `.p12`/`.cer`/`.csr`/`.p7b` 及 material 目录 | `security: remove committed signing certs, secrets, and build artifacts` |
+| 签名密码写入 `build-profile.json5` | 将 `storeFile`/`storePassword`/`keyAlias`/`keyPassword`/`profile`/`certpath` 全部清空为占位符，并加注释提示需在 DevEco Studio 本地重新配置签名 | 同上 |
+| 已签名/未签名构建产物入库 | `git rm -r --cached build/outputs`，从仓库中移除 `AIskin3-default-signed.app` 等产物 | 同上 |
+| 根目录 node_modules / oh_modules 整包入库、无根 .gitignore | `git rm -r --cached node_modules oh_modules`，新增根目录 `.gitignore`（覆盖 node_modules/oh_modules/build/证书扩展名/.DS_Store 等） | 同上 |
+| 测试脚本硬编码真实手机号+弱密码 | `test_api_connection.js`、`test_skin_analysis_api.js` 改为从 `TEST_PHONE`/`TEST_PASSWORD` 环境变量读取，未设置时直接退出并提示 | `security: stop hardcoding real test account credentials in scripts` |
+| 隐私政策/用户协议登录后不可查阅 | `SettingsMenu.ets` 新增"用户协议""隐私政策"菜单项，`ProfileView.ets` 复用已有的 `DocumentModal` 组件展示 `DocumentContent.ets` 中的条款全文 | `feat: expose privacy policy and terms of use after login` |
+| 非医疗免责声明未在结果页复现 | 在皮肤分析结果页（`SkinStatusView.ets`）、成分分析页（`IngredientView.ets`）、成分冲突检测页（`ConflictView.ets`）的结果展示区域末尾，各加入一行常驻小字免责声明 | `feat: show non-medical AI disclaimer on analysis result pages` |
+| 拍照/上传照片前无 AI 处理说明 | `SkinDetectionWelcome.ets` 在拍照/相册按钮下方加入说明文字，告知照片将上传至 AI 引擎分析、结果仅供参考、继续操作即视为了解并同意 | `feat: notify user before photo is sent for AI skin analysis` |
+
+以上均为**当前工作树/HEAD 的正常提交**，不涉及强制推送或历史改写，可通过 `git log`/`git diff` 正常审阅、回退。
+
+### 7.2 未修复：注销（账户删除）入口
+
+**没有实现**，原因：本仓库（`harmonyos_AIskin`）只是客户端前端工程，后端接口文档 `doc/接口.md` 中目前只记录了 `register` / `login` / `users/me` / `users/stats` 四个接口，**没有任何账户删除 / 注销相关的后端接口**。前端没有可调用的删除账户 API，如果只在前端加一个"注销"按钮但背后没有真实删除逻辑，等于伪造了一个不生效的入口，比"没有入口"更容易误导用户和审核方，因此本次没有做假实现。
+
+要满足应用商店对"自助注销"的要求，需要：
+1. 后端团队先提供账户删除接口（例如 `DELETE /api/users/me`，需级联清理用户的照片分析记录等个人数据）；
+2. 前端在拿到接口后，于 `AuthApiService.ets` / `AuthService.ets` 中补充 `deleteAccount` 方法，并在 `ProfileView.ets`/`SettingsMenu.ets` 中加入"注销账户"入口（建议加二次确认弹窗，防误触）。
+
+这部分依赖仓库范围之外的后端改动，未在本次审计/整改中完成。
+
+### 7.3 未处理：证书轮换与 Git 历史重写
+
+第 5 节已经说明：本仓库只有 1 个提交，因此第 4 节的证书/私钥/密码此刻**仍然完整存在于 `main` 分支现有的那一个提交里**（`codex/app-store-readiness` 分支上新增的清理提交只是在其之上追加了一次"删除"，并不会抹掉更早提交里的内容）。要做到证书真正不可获取，需要：
+
+1. **在华为 AppGallery Connect 后台作废/重新签发新的签名证书**（.p12/.cer/.csr/.p7b 全套材料都需要用新证书重新生成），这是人工操作，不在本次代码改动范围内，我也没有相应账号权限去执行。
+2. **重写 Git 历史**（如 `git filter-repo` 清除旧证书文件的 blob）并**强制推送**覆盖远程分支——这是破坏性操作，会影响所有已 clone/fork 该仓库的人，且一旦执行不可逆，**本次未经你明确单独授权不会执行**。
+
+在完成第 1 步（换发新证书）之前，即使清理了历史，旧证书本身也应当被视为已泄露、不可再用于正式签名；仅做历史清理而不换证书，起不到实质防护作用。是否要现在进行证书轮换、以及是否要重写 Git 历史，请单独确认。
