@@ -3,11 +3,15 @@ import { ProfileCard } from '../components/profile/ProfileCard'
 import { AchievementCard, AchievementItem } from '../components/profile/AchievementCard'
 import { SettingsMenu } from '../components/profile/SettingsMenu'
 import { AuthService } from '../services/AuthService'
+import { DocumentModal } from '../components/common/DocumentModal'
+import { DocumentContent } from '../utils/DocumentContent'
 
 @Component
 export struct ProfileView {
   private authService: AuthService = AuthService.getInstance()
   onLogout?: () => void
+  @State showTermsModal: boolean = false
+  @State showPrivacyModal: boolean = false
   @State achievements: AchievementItem[] = [
     {
       id: '1',
@@ -50,6 +54,7 @@ export struct ProfileView {
   ]
 
   build() {
+    Stack() {
     Column() {
       // Header
       AppHeader({
@@ -118,11 +123,39 @@ export struct ProfileView {
     .width('100%')
     .height('100%')
     .backgroundColor('#fff9fb')
+
+    // Terms Modal - 全屏覆盖
+    DocumentModal({
+      show: this.showTermsModal,
+      title: '用户协议',
+      content: DocumentContent.getTermsOfUse(),
+      onClose: () => {
+        this.showTermsModal = false
+      }
+    })
+
+    // Privacy Policy Modal - 全屏覆盖
+    DocumentModal({
+      show: this.showPrivacyModal,
+      title: '隐私政策',
+      content: DocumentContent.getPrivacyPolicy(),
+      onClose: () => {
+        this.showPrivacyModal = false
+      }
+    })
+    }
+    .width('100%')
+    .height('100%')
   }
 
   handleSettingClick(settingId: string) {
-    // TODO: Handle setting click
-    console.info('Setting clicked:', settingId)
+    if (settingId === 'terms') {
+      this.showTermsModal = true
+    } else if (settingId === 'privacy') {
+      this.showPrivacyModal = true
+    } else {
+      console.info('Setting clicked:', settingId)
+    }
   }
 
   async handleLogout() {

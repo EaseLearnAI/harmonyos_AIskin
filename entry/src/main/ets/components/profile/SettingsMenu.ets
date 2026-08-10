@@ -18,6 +18,20 @@ export struct SettingsMenu {
       color: '#AB47BC'
     },
     {
+      id: 'terms',
+      title: '用户协议',
+      description: '查看使用条款',
+      icon: '📃',
+      color: '#26A69A'
+    },
+    {
+      id: 'privacy',
+      title: '隐私政策',
+      description: '了解我们如何保护你的信息',
+      icon: '🔒',
+      color: '#5C6BC0'
+    },
+    {
       id: 'help',
       title: '帮助与反馈',
       description: '提供使用建议和问题反馈',
@@ -99,6 +113,10 @@ export struct SettingsMenu {
         return '#E8F5E9'
       case '#EF5350':
         return '#FFEBEE'
+      case '#26A69A':
+        return '#E0F2F1'
+      case '#5C6BC0':
+        return '#E8EAF6'
       default:
         return '#f3f4f6'
     }
