@@ -1,0 +1,24 @@
+# Dependencies
+/node_modules
+/oh_modules
+
+# Build outputs
+/build
+/.preview
+/.cxx
+/.test
+
+# DevEco local files
+.hvigor
+local.properties
+
+# Signing material must never be committed
+*.p12
+*.jks
+*.cer
+*.csr
+*.p7b
+/doc/password/
+
+# OS files
+.DS_Store

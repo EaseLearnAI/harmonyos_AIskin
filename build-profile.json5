@@ -4,14 +4,16 @@
       {
         "name": "default",
         "type": "HarmonyOS",
+        // 签名材料不应提交到仓库；本机开发者需在 DevEco Studio 中重新配置签名
+        // （Project Structure > Signing Configs），使用未泄露的新证书。
         "material": {
-          "storeFile": "/Users/terry/Desktop/tmp/password/AIskin3/AIskin3.p12",
-          "storePassword": "0000001B8FE61EBDAB1377DC034A0DD72CBD227152A2AF24BF47387F4B3EB71960536FD042094286404B0A",
-          "keyAlias": "AIskin3",
-          "keyPassword": "0000001B59B6008B354FD324574BADFFEDFB861DAF3378E2369FA02722386F924CC6374E9B55CF73962ACE",
+          "storeFile": "",
+          "storePassword": "",
+          "keyAlias": "",
+          "keyPassword": "",
           "signAlg": "SHA256withECDSA",
-          "profile": "/Users/terry/Desktop/tmp/password/AIskin3/AIskin3Release.p7b",
-          "certpath": "/Users/terry/Desktop/tmp/password/AIskin3/AIskin3.cer"
+          "profile": "",
+          "certpath": ""
         }
       }
     ],
