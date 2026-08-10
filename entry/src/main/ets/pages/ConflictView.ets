@@ -103,6 +103,12 @@ export struct ConflictView {
               }
               .id('routine-section')
               .width('100%')
+
+              Text('以上冲突检测结果由 AI 自动生成，仅供参考，不构成医疗或专业配方建议。')
+                .fontSize(11)
+                .fontColor('#9CA3AF')
+                .lineHeight(16)
+                .margin({ left: 14, right: 14, top: 8 })
             }
           }
           .width('100%')

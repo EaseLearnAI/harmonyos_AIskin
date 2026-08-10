@@ -491,7 +491,13 @@ export struct SkinStatusView {
                 AIRecommendations({
                   recommendations: this.analysisResult.overallAssessment?.recommendations || []
                 })
-                .margin({ left: 16, right: 16, bottom: 0 })
+                .margin({ left: 16, right: 16, bottom: 12 })
+
+                Text('以上结果由 AI 自动生成，仅供日常护肤参考，不构成医疗诊断或治疗建议，如有皮肤问题请及时咨询专业医生。')
+                  .fontSize(11)
+                  .fontColor('#9CA3AF')
+                  .lineHeight(16)
+                  .margin({ left: 16, right: 16, bottom: 0 })
               }
               .width('100%')
             }

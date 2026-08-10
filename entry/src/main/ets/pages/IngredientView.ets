@@ -101,6 +101,12 @@ export struct IngredientView {
             AnalysisSummary({
               analysis: this.summary
             })
+
+            Text('以上成分解析由 AI 自动生成，仅供参考，不构成医疗或专业配方建议。')
+              .fontSize(11)
+              .fontColor('#9CA3AF')
+              .lineHeight(16)
+              .margin({ top: 8 })
           }
           .width('100%')
           .padding({ left: 16, right: 20, bottom: 20 })
