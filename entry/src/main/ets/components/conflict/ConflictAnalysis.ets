@@ -1,3 +1,4 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 @Component
 export struct ConflictAnalysis {
   @Prop conflicts: ConflictItem[] = []
@@ -23,7 +24,7 @@ export struct ConflictAnalysis {
         Text('检测结果')
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#333333')
+          .fontColor(AISkinColor.text)
           .layoutWeight(1)
 
         Row() {
@@ -32,7 +33,7 @@ export struct ConflictAnalysis {
             .margin({ right: 4 })
           Text('刚刚更新')
             .fontSize(12)
-            .fontColor('#888888')
+            .fontColor(AISkinColor.secondary)
         }
       }
       .width('100%')
@@ -60,8 +61,7 @@ export struct ConflictAnalysis {
     }
     .width('100%')
     .padding(20)
-    .backgroundColor(Color.White)
-    .borderRadius(20)
+    .attributeModifier(new CardStyle())
     .margin({ bottom: 16 })
     .shadow({
       radius: 10,
@@ -80,14 +80,14 @@ export struct ConflictAnalysis {
 
       Text('太棒了！这些产品没有发现成分冲突，可以安心使用')
         .fontSize(16)
-        .fontColor('#388e3c')
+        .fontColor(AISkinColor.success)
         .fontWeight(FontWeight.Medium)
         .textAlign(TextAlign.Center)
         .lineHeight(24)
     }
     .width('100%')
     .padding(32)
-    .backgroundColor('#f1f8e9')
+    .backgroundColor(AISkinColor.successSurface)
     .borderRadius(20)
     .border({
       width: 1,
@@ -104,7 +104,7 @@ export struct ConflictAnalysis {
         Stack() {
           Text('●')
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
         }
         .width(10)
         .height(10)
@@ -113,7 +113,7 @@ export struct ConflictAnalysis {
         Text('这些成分会打架哦！')
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#d32f2f')
+          .fontColor(AISkinColor.danger)
       }
       .width('100%')
       .margin({ bottom: 16 })
@@ -132,11 +132,11 @@ export struct ConflictAnalysis {
       Stack() {
         Text('🐾')
           .fontSize(20)
-          .fontColor('#f44336')
+          .fontColor(AISkinColor.danger)
       }
       .width(48)
       .height(48)
-      .backgroundColor(Color.White)
+      .backgroundColor(AISkinColor.surface)
       .borderRadius(15)
       .alignContent(Alignment.Center)
       .margin({ right: 16 })
@@ -145,12 +145,12 @@ export struct ConflictAnalysis {
         Text(this.formatComponents(conflict.components || []))
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+          .fontColor(AISkinColor.text)
           .margin({ bottom: 8 })
 
         Text(conflict.description || '')
           .fontSize(14)
-          .fontColor('#666666')
+          .fontColor(AISkinColor.secondary)
           .lineHeight(20)
           .margin({ bottom: 12 })
 
@@ -170,7 +170,7 @@ export struct ConflictAnalysis {
     }
     .width('100%')
     .padding(20)
-    .backgroundColor('#ffebee')
+    .backgroundColor(AISkinColor.dangerSurface)
     .borderRadius(16)
     .border({
       width: 1,
@@ -187,7 +187,7 @@ export struct ConflictAnalysis {
         Stack() {
           Text('●')
             .fontSize(12)
-            .fontColor('#4caf50')
+            .fontColor(AISkinColor.success)
         }
         .width(10)
         .height(10)
@@ -196,7 +196,7 @@ export struct ConflictAnalysis {
         Text('这些组合很和谐')
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#2e7d32')
+          .fontColor(AISkinColor.success)
       }
       .width('100%')
       .margin({ bottom: 16 })
@@ -215,11 +215,11 @@ export struct ConflictAnalysis {
       Stack() {
         Text('✓')
           .fontSize(20)
-          .fontColor('#4caf50')
+          .fontColor(AISkinColor.success)
       }
       .width(48)
       .height(48)
-      .backgroundColor(Color.White)
+      .backgroundColor(AISkinColor.surface)
       .borderRadius(15)
       .alignContent(Alignment.Center)
       .margin({ right: 16 })
@@ -228,12 +228,12 @@ export struct ConflictAnalysis {
         Text(this.formatComponents(combo.components || []))
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#333333')
+          .fontColor(AISkinColor.text)
           .margin({ bottom: 8 })
 
         Text(combo.description || '')
           .fontSize(14)
-          .fontColor('#666666')
+          .fontColor(AISkinColor.secondary)
           .lineHeight(20)
       }
       .layoutWeight(1)
@@ -241,7 +241,7 @@ export struct ConflictAnalysis {
     }
     .width('100%')
     .padding(20)
-    .backgroundColor('#e8f5e9')
+    .backgroundColor(AISkinColor.successSurface)
     .borderRadius(16)
     .border({
       width: 1,
@@ -261,7 +261,7 @@ export struct ConflictAnalysis {
         Text('猫咪护肤建议')
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#333333')
+          .fontColor(AISkinColor.text)
       }
       .width('100%')
       .margin({ bottom: 20 })
@@ -272,7 +272,7 @@ export struct ConflictAnalysis {
           Text('产品搭配:')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 12 })
 
           if (this.hasCannotUseTogether()) {
@@ -285,7 +285,7 @@ export struct ConflictAnalysis {
         }
         .width('100%')
         .padding(16)
-        .backgroundColor('#f9fafb')
+        .backgroundColor(AISkinColor.muted)
         .borderRadius(16)
         .margin({ bottom: 16 })
       }
@@ -296,7 +296,7 @@ export struct ConflictAnalysis {
           Text('护肤步骤:')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 12 })
 
           if (this.hasMorningRoutine()) {
@@ -309,7 +309,7 @@ export struct ConflictAnalysis {
         }
         .width('100%')
         .padding(16)
-        .backgroundColor('#f9fafb')
+        .backgroundColor(AISkinColor.muted)
         .borderRadius(16)
       }
     }
@@ -318,7 +318,7 @@ export struct ConflictAnalysis {
     .padding({ top: 20 })
     .border({
       width: { top: 1 },
-      color: '#eeeeee',
+      color: AISkinColor.divider,
       style: BorderStyle.Solid
     })
   }
@@ -333,7 +333,7 @@ export struct ConflictAnalysis {
         Text('不能一起使用:')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#d32f2f')
+          .fontColor(AISkinColor.danger)
       }
       .width('100%')
       .margin({ bottom: 12 })
@@ -343,16 +343,16 @@ export struct ConflictAnalysis {
           Text(this.formatProductPair(item.products || []))
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 4 })
 
           Text(`原因：${item.reason || ''}`)
             .fontSize(13)
-            .fontColor('#666666')
+            .fontColor(AISkinColor.secondary)
         }
         .width('100%')
         .padding(12)
-        .backgroundColor(Color.White)
+        .backgroundColor(AISkinColor.surface)
         .borderRadius(12)
         .margin({ bottom: 8 })
         .alignItems(HorizontalAlign.Start)
@@ -372,7 +372,7 @@ export struct ConflictAnalysis {
         Text('可以一起使用:')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#2e7d32')
+          .fontColor(AISkinColor.success)
       }
       .width('100%')
       .margin({ bottom: 12 })
@@ -382,16 +382,16 @@ export struct ConflictAnalysis {
           Text(this.formatProductPair(item.products || []))
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 4 })
 
           Text(`原因：${item.reason || ''}`)
             .fontSize(13)
-            .fontColor('#666666')
+            .fontColor(AISkinColor.secondary)
         }
         .width('100%')
         .padding(12)
-        .backgroundColor(Color.White)
+        .backgroundColor(AISkinColor.surface)
         .borderRadius(12)
         .margin({ bottom: 8 })
         .alignItems(HorizontalAlign.Start)
@@ -410,7 +410,7 @@ export struct ConflictAnalysis {
         Text('早晨')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#424242')
+          .fontColor(AISkinColor.text)
       }
       .width('100%')
       .margin({ bottom: 12 })
@@ -419,13 +419,13 @@ export struct ConflictAnalysis {
         ForEach(this.recommendations.routines?.morning || [], (step: string, index: number) => {
           Text(`${index + 1}. ${step}`)
             .fontSize(14)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 8 })
         })
       }
       .width('100%')
       .padding(12)
-      .backgroundColor('#f5f5f5')
+      .backgroundColor(AISkinColor.muted)
       .borderRadius(8)
     }
     .width('100%')
@@ -442,7 +442,7 @@ export struct ConflictAnalysis {
         Text('晚上')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#424242')
+          .fontColor(AISkinColor.text)
       }
       .width('100%')
       .margin({ bottom: 12 })
@@ -451,13 +451,13 @@ export struct ConflictAnalysis {
         ForEach(this.recommendations.routines?.evening || [], (step: string, index: number) => {
           Text(`${index + 1}. ${step}`)
             .fontSize(14)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 8 })
         })
       }
       .width('100%')
       .padding(12)
-      .backgroundColor('#f5f5f5')
+      .backgroundColor(AISkinColor.muted)
       .borderRadius(8)
     }
     .width('100%')
@@ -502,26 +502,26 @@ export struct ConflictAnalysis {
   getSeverityColor(severity: string): ResourceColor {
     switch (severity) {
       case '高':
-        return '#d32f2f'
+        return AISkinColor.danger
       case '中':
-        return '#f57c00'
+        return AISkinColor.warning
       case '低':
-        return '#388e3c'
+        return AISkinColor.success
       default:
-        return '#f57c00'
+        return AISkinColor.warning
     }
   }
 
   getSeverityBgColor(severity: string): ResourceColor {
     switch (severity) {
       case '高':
-        return '#ffebee'
+        return AISkinColor.dangerSurface
       case '中':
-        return '#fff8e1'
+        return AISkinColor.warningSurface
       case '低':
-        return '#e8f5e9'
+        return AISkinColor.successSurface
       default:
-        return '#fff8e1'
+        return AISkinColor.warningSurface
     }
   }
 }
@@ -558,4 +558,3 @@ export interface RecommendationData {
   productPairings?: ProductPairings
   routines?: Routines
 }
-

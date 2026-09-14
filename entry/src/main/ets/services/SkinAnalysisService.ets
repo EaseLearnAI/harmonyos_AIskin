@@ -2,6 +2,7 @@ import { FileService, FileUploadResponse, FileUploadResponseData } from './FileS
 import { ImagePickerService, ImagePickerResult } from './ImagePickerService'
 import { SkinAnalysisApiService, SkinAnalysisData, AnalysisHistoryData, AnalysisDetailData } from './SkinAnalysisApiService'
 import { common } from '@kit.AbilityKit'
+import fs from '@ohos.file.fs'
 
 /**
  * 皮肤分析响应
@@ -130,7 +131,6 @@ export class SkinAnalysisService {
     onProgress?: (progress: number, status: string) => void
   ): Promise<SkinAnalysisResponse> {
     console.log('===== 🔬 开始皮肤分析 =====')
-    console.log(`📁 图片路径: ${imagePath}`)
 
     try {
       // 1. 上传图片
@@ -150,7 +150,6 @@ export class SkinAnalysisService {
       }
 
       console.log('✅ 图片上传成功')
-      console.log(`📊 上传响应: ${JSON.stringify(uploadResponse.data)}`)
 
       // 2. 从上传响应中获取分析结果
       // 根据Vue项目的实现,上传接口直接返回分析结果
@@ -218,10 +217,17 @@ export class SkinAnalysisService {
         message: '无法获取分析结果'
       }
     } catch (error) {
-      console.error('❌ 分析过程异常:', JSON.stringify(error))
+      console.error('❌ 分析过程异常')
       return {
         success: false,
         message: `分析失败: ${error}`
+      }
+    } finally {
+      // 系统选择器复制到应用缓存的图片仅用于本次上传，完成后立即清理。
+      try {
+        fs.unlinkSync(imagePath)
+      } catch (_) {
+        // 文件可能已由系统清理，无需阻断分析结果。
       }
     }
   }
@@ -292,4 +298,3 @@ export class SkinAnalysisService {
     return result
   }
 }
-

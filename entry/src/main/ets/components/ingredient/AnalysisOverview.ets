@@ -1,12 +1,13 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 @Component
 export struct AnalysisOverview {
   @Prop analysis: AnalysisData = {
     safetyIndex: 0,
     efficacyScore: 0,
     activeIngredients: 0,
-    acneRisk: { level: '低', percentage: 0 },
-    irritationRisk: { level: '低', percentage: 0 },
-    allergyRisk: { level: '低', percentage: 0 }
+    acneRisk: { level: '未知', percentage: 0 },
+    irritationRisk: { level: '未知', percentage: 0 },
+    allergyRisk: { level: '未知', percentage: 0 }
   }
 
   build() {
@@ -14,14 +15,14 @@ export struct AnalysisOverview {
       Text('安全性分析')
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#333333')
+        .fontColor(AISkinColor.text)
         .margin({ bottom: 16 })
 
       // Score Cards
       Row() {
-        this.ScoreCard('安全指数', this.analysis.safetyIndex || 0, '#2e7d32', '#e8f5e9')
-        this.ScoreCard('功效评分', this.analysis.efficacyScore || 0, '#1565c0', '#e3f2fd')
-        this.ScoreCard('活性成分', this.analysis.activeIngredients || 0, '#6a1b9a', '#f3e5f5')
+        this.ScoreCard('安全指数', this.analysis.safetyIndex || 0, AISkinColor.success, AISkinColor.successSurface)
+        this.ScoreCard('功效评分', this.analysis.efficacyScore || 0, AISkinColor.accent, AISkinColor.selected)
+        this.ScoreCard('活性成分', this.analysis.activeIngredients || 0, AISkinColor.accent, AISkinColor.muted)
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween)
@@ -29,27 +30,26 @@ export struct AnalysisOverview {
 
       // Risk Indicators
       Column() {
-        this.RiskIndicator('致痘风险', this.analysis.acneRisk || { level: '低', percentage: 0 })
-        this.RiskIndicator('刺激风险', this.analysis.irritationRisk || { level: '低', percentage: 0 })
-        this.RiskIndicator('过敏风险', this.analysis.allergyRisk || { level: '低', percentage: 0 })
+        this.RiskIndicator('致痘风险', this.analysis.acneRisk || { level: '未知', percentage: 0 })
+        this.RiskIndicator('刺激风险', this.analysis.irritationRisk || { level: '未知', percentage: 0 })
+        this.RiskIndicator('过敏风险', this.analysis.allergyRisk || { level: '未知', percentage: 0 })
       }
       .width('100%')
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
-    .borderRadius(16)
+    .attributeModifier(new CardStyle())
     .margin({ bottom: 16 })
     .shadow({
       radius: 8,
-      color: 'rgba(255, 182, 193, 0.15)',
+      color: AISkinColor.shadow,
       offsetX: 0,
       offsetY: 4
     })
   }
 
   @Builder
-  ScoreCard(label: string, score: number, textColor: string, bgColor: string) {
+  ScoreCard(label: string, score: number, textColor: ResourceColor, bgColor: ResourceColor) {
     Column() {
       Text(score.toString())
         .fontSize(24)
@@ -59,7 +59,7 @@ export struct AnalysisOverview {
 
       Text(label)
         .fontSize(12)
-        .fontColor('#666666')
+        .fontColor(AISkinColor.secondary)
     }
     .width('30%')
     .padding(12)
@@ -73,7 +73,7 @@ export struct AnalysisOverview {
     Row() {
       Text(label)
         .fontSize(14)
-        .fontColor('#555555')
+        .fontColor(AISkinColor.secondary)
         .layoutWeight(1)
 
       Row() {
@@ -85,17 +85,17 @@ export struct AnalysisOverview {
           })
           .width(96)
           .height(8)
-          .color(this.getRiskColor(risk.level || '低'))
-          .backgroundColor('#f1f1f1')
+          .color(this.getRiskColor(risk.level || '未知'))
+          .backgroundColor(AISkinColor.muted)
         }
         .width(96)
         .height(8)
         .borderRadius(4)
         .margin({ right: 8 })
 
-        Text(risk.level || '低')
+        Text(risk.level || '未知')
           .fontSize(12)
-          .fontColor(this.getRiskColor(risk.level || '低'))
+          .fontColor(this.getRiskColor(risk.level || '未知'))
           .width(32)
       }
     }
@@ -108,12 +108,13 @@ export struct AnalysisOverview {
   getRiskColor(level: string): ResourceColor {
     switch (level) {
       case '高':
-        return '#f44336'
+        return AISkinColor.danger
       case '中':
-        return '#ff9800'
+        return AISkinColor.warning
       case '低':
+        return AISkinColor.success
       default:
-        return '#4caf50'
+        return AISkinColor.secondary
     }
   }
 }
@@ -132,4 +133,3 @@ export interface AnalysisData {
   irritationRisk?: RiskData
   allergyRisk?: RiskData
 }
-

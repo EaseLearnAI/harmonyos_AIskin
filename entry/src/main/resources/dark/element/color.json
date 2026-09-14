@@ -2,7 +2,115 @@
   "color": [
     {
       "name": "start_window_background",
-      "value": "#000000"
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "aiskin_accent",
+      "value": "#D4B7F2"
+    },
+    {
+      "name": "aiskin_primary",
+      "value": "#2D2B32"
+    },
+    {
+      "name": "aiskin_text",
+      "value": "#F3EDF8"
+    },
+    {
+      "name": "aiskin_secondary",
+      "value": "#C1B5CD"
+    },
+    {
+      "name": "aiskin_white",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "aiskin_surface",
+      "value": "#DE292330"
+    },
+    {
+      "name": "aiskin_elevated",
+      "value": "#FA332B3D"
+    },
+    {
+      "name": "aiskin_muted",
+      "value": "#FA251F2D"
+    },
+    {
+      "name": "aiskin_selected",
+      "value": "#503E2954"
+    },
+    {
+      "name": "aiskin_border",
+      "value": "#FF4B4058"
+    },
+    {
+      "name": "aiskin_divider",
+      "value": "#FF4B4058"
+    },
+    {
+      "name": "aiskin_scrim",
+      "value": "#99000000"
+    },
+    {
+      "name": "aiskin_shadow",
+      "value": "#33000000"
+    },
+    {
+      "name": "aiskin_top",
+      "value": "#1C1725"
+    },
+    {
+      "name": "aiskin_middle",
+      "value": "#231B2B"
+    },
+    {
+      "name": "aiskin_bottom",
+      "value": "#18141E"
+    },
+    {
+      "name": "aiskin_glowLeft",
+      "value": "#303F2948"
+    },
+    {
+      "name": "aiskin_glowRight",
+      "value": "#30372550"
+    },
+    {
+      "name": "aiskin_glowMiddle",
+      "value": "#302E2138"
+    },
+    {
+      "name": "aiskin_clear",
+      "value": "#00000000"
+    },
+    {
+      "name": "aiskin_danger",
+      "value": "#FFB4AB"
+    },
+    {
+      "name": "aiskin_dangerSurface",
+      "value": "#4A2227"
+    },
+    {
+      "name": "aiskin_warning",
+      "value": "#F1CB91"
+    },
+    {
+      "name": "aiskin_warningSurface",
+      "value": "#42321F"
+    },
+    {
+      "name": "aiskin_success",
+      "value": "#A5D6A7"
+    },
+    {
+      "name": "aiskin_successSurface",
+      "value": "#223C29"
+    },
+    {
+      "name": "aiskin_dialog",
+      "value": "#FF292330"
     }
   ]
 }

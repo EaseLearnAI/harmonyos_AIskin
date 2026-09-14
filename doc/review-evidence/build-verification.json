@@ -1,0 +1,15 @@
+{
+  "version": "1.0.1",
+  "versionCode": 1000001,
+  "debug": false,
+  "signed": false,
+  "permissions": [
+    "ohos.permission.INTERNET"
+  ],
+  "sha256": "2159db368560a3e46de86e6d8098b53c446135d7525d1df6e9adc6664a27b4e2",
+  "bytes": 7552774,
+  "build": "./scripts/build-local.sh production",
+  "sdk": "HarmonyOS 6 / API 20",
+  "backendReference": "d17ebf0",
+  "iosReference": "9f69aa9"
+}

@@ -1,0 +1,15 @@
+.DS_Store
+local.properties
+node_modules/
+oh_modules/
+.hvigor/
+.idea/
+build/
+entry/build/
+doc/password/
+*.p12
+*.p7b
+*.cer
+*.csr
+*.pem
+*.key

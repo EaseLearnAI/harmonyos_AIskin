@@ -56,11 +56,11 @@ export struct RegisterView {
           .constraintSize({ maxWidth: 400 })
         }
         .layoutWeight(1)
-        .scrollBar(BarState.Auto)
+        .scrollBar(BarState.Off).align(Alignment.Top)
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#fff9fb')
+      .backgroundColor(Color.Transparent)
 
       // Terms Modal - 全屏覆盖
       DocumentModal({

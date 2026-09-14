@@ -1,3 +1,5 @@
+import { ProcessingPanel } from '../common/ProcessingPanel'
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 import { ImageUploader } from './ImageUploader'
 import { ProductApiService } from './ProductApiService'
 import { IngredientAnalysisApiService } from './IngredientAnalysisApiService'
@@ -47,19 +49,19 @@ export struct ProductUploadModal {
             Text('添加护肤产品')
               .fontSize(20)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#333333')
+              .fontColor(AISkinColor.text)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
 
             Button() {
               Text('✕')
                 .fontSize(18)
-                .fontColor('#666666')
+                .fontColor(AISkinColor.secondary)
             }
             .type(ButtonType.Circle)
             .width(36)
             .height(36)
-            .backgroundColor('#F5F5F5')
+            .backgroundColor(AISkinColor.muted)
             .onClick(() => {
               this.handleClose()
             })
@@ -70,7 +72,7 @@ export struct ProductUploadModal {
           // Subtitle
           Text('上传产品图片，AI将自动识别产品成分并进行分析')
             .fontSize(14)
-            .fontColor('#666666')
+            .fontColor(AISkinColor.secondary)
             .textAlign(TextAlign.Center)
             .margin({ bottom: 20, left: 24, right: 24 })
 
@@ -82,12 +84,12 @@ export struct ProductUploadModal {
                 .margin({ right: 8 })
               Text(this.modalErrorMessage)
                 .fontSize(14)
-                .fontColor('#D32F2F')
+                .fontColor(AISkinColor.danger)
                 .layoutWeight(1)
             }
             .width('100%')
             .padding(12)
-            .backgroundColor('#FFEBEE')
+            .backgroundColor(AISkinColor.dangerSurface)
             .borderRadius(12)
             .margin({ bottom: 20, left: 24, right: 24 })
           }
@@ -99,7 +101,6 @@ export struct ProductUploadModal {
               imagePath: this.selectedImagePath,
               onImageSelected: (image: string) => {
                 console.log(`===== 📸 图片已选择回调 =====`)
-                console.log(`📋 图片路径: ${image}`)
                 this.selectedImage = image
                 this.selectedImagePath = image
                 this.modalError = false
@@ -113,25 +114,14 @@ export struct ProductUploadModal {
                 this.selectedImagePath = null
               },
               onSelectImage: () => {
-                this.handleSelectImage()
+                this.requestImageConsent()
               }
             })
             .margin({ bottom: 20, left: 24, right: 24 })
           }
 
-          // Progress Steps (在分析过程中显示)
-          if (this.currentStep > 0) {
-            Column() {
-              this.ProgressStep(1, '创建产品', this.stepStatus.create)
-              this.ProgressStep(2, '上传图片', this.stepStatus.upload)
-              this.ProgressStep(3, '提取成分', this.stepStatus.extract)
-              this.ProgressStep(4, '分析成分', this.stepStatus.analyze)
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('rgba(255, 255, 255, 0.6)')
-            .borderRadius(16)
-            .margin({ bottom: 0, left: 24, right: 24 })
+          if (this.currentStep > 0 && !this.modalError) {
+            ProcessingPanel({ title: '成分分析', message: '正在识别产品并整理成分报告' })
           }
 
           Blank()
@@ -141,8 +131,8 @@ export struct ProductUploadModal {
             Button(this.getSubmitButtonText())
               .width('100%')
               .height(44)
-              .backgroundColor(this.canSubmit() ? '#FF9A9E' : '#E0E0E0')
-              .fontColor(Color.White)
+              .backgroundColor(this.canSubmit() ? AISkinColor.primary : AISkinColor.divider)
+              .fontColor(this.canSubmit() ? Color.White : AISkinColor.secondary)
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
               .borderRadius(12)
@@ -157,14 +147,7 @@ export struct ProductUploadModal {
         .layoutWeight(1)
       }
       .width('90%')
-      .backgroundColor(Color.White)
-      .borderRadius(24)
-      .shadow({
-        radius: 20,
-        color: '#000000',
-        offsetX: 0,
-        offsetY: 10
-      })
+      .attributeModifier(new CardStyle()).backgroundColor(AISkinColor.dialog)
       .constraintSize({ maxHeight: '90%' })
     }
     .width('100%')
@@ -182,11 +165,11 @@ export struct ProductUploadModal {
         Text(step.toString())
           .fontSize(14)
           .fontWeight(FontWeight.Bold)
-          .fontColor(this.currentStep >= step ? Color.White : '#757575')
+          .fontColor(this.currentStep >= step ? Color.White : AISkinColor.secondary)
       }
       .width(28)
       .height(28)
-      .backgroundColor(this.currentStep >= step ? '#FF9A9E' : '#E0E0E0')
+      .backgroundColor(this.currentStep >= step ? AISkinColor.primary : AISkinColor.divider)
       .borderRadius(14)
       .justifyContent(FlexAlign.Center)
       .margin({ right: 12 })
@@ -195,12 +178,12 @@ export struct ProductUploadModal {
         Text(title)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#424242')
+          .fontColor(AISkinColor.text)
           .margin({ bottom: 2 })
 
         Text(status)
           .fontSize(12)
-          .fontColor('#757575')
+          .fontColor(AISkinColor.secondary)
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
@@ -227,6 +210,12 @@ export struct ProductUploadModal {
     }
   }
 
+  requestImageConsent(): void {
+    AlertDialog.show({ title: '确认AI图片处理', message: '你选择的产品图片将上传至阿里云对象存储并交由通义千问模型识别成分、生成分析报告。图片和结果保存在账号中，可随产品或账号一并删除。请避免上传含个人信息的图片。',
+      primaryButton: { value: '取消', action: () => {} },
+      secondaryButton: { value: '同意并选择图片', action: () => { this.handleSelectImage() } } })
+  }
+
   async handleSelectImage() {
     console.log('===== 🖼️ 启动照片选择功能 =====')
     console.log('📱 在 ProductUploadModal 中处理图片选择')
@@ -240,10 +229,8 @@ export struct ProductUploadModal {
       console.log('📂 调用 ImagePickerService.selectFromGallery...')
       const pickResult = await this.imagePickerService.selectFromGallery(context)
       
-      console.log(`📦 选择结果: ${JSON.stringify(pickResult)}`)
-      
       if (pickResult.success && pickResult.filePath) {
-        console.log(`✅ 已选择图片: ${pickResult.filePath}`)
+        console.log('✅ 已选择图片')
         console.log(`📸 设置 selectedImagePath 和 selectedImage`)
         this.selectedImagePath = pickResult.filePath
         this.selectedImage = pickResult.filePath
@@ -255,7 +242,7 @@ export struct ProductUploadModal {
         console.log(`ℹ️ 用户取消选择或选择失败: ${pickResult.message || '未知错误'}`)
       }
     } catch (error) {
-      console.error('❌ 选择图片失败:', JSON.stringify(error))
+      console.error('❌ 选择图片失败')
       this.modalError = true
       this.modalErrorMessage = '选择图片失败，请重试'
     }
@@ -334,7 +321,7 @@ export struct ProductUploadModal {
 
       this.handleClose()
     } catch (error) {
-      console.error('❌ Error submitting product:', JSON.stringify(error))
+      console.error('❌ Error submitting product')
       this.modalError = true
       this.modalErrorMessage = error instanceof Error ? error.message : '处理失败，请重试'
       
@@ -378,4 +365,3 @@ interface StepStatus {
   extract: string
   analyze: string
 }
-

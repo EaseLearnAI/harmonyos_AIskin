@@ -1,3 +1,4 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 @Component
 export struct DocumentModal {
   @Prop show: boolean = false
@@ -13,7 +14,7 @@ export struct DocumentModal {
         Column()
           .width('100%')
           .height('100%')
-          .backgroundColor('rgba(0, 0, 0, 0.5)')
+          .backgroundColor(AISkinColor.scrim)
           .onClick(() => {
             if (this.onClose) {
               this.onClose()
@@ -27,19 +28,19 @@ export struct DocumentModal {
             Text(this.title)
               .fontSize(18)
               .fontWeight(FontWeight.Bold)
-              .fontColor('#333333')
+              .fontColor(AISkinColor.text)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
 
             Button() {
               Text('✕')
                 .fontSize(18)
-                .fontColor('#666666')
+                .fontColor(AISkinColor.secondary)
             }
             .type(ButtonType.Circle)
             .width(32)
             .height(32)
-            .backgroundColor('#f1f1f1')
+            .backgroundColor(AISkinColor.muted)
             .onClick(() => {
               if (this.onClose) {
                 this.onClose()
@@ -50,7 +51,7 @@ export struct DocumentModal {
           .padding({ top: 16, bottom: 12, left: 20, right: 20 })
           .border({
             width: { bottom: 1 },
-            color: '#e0e0e0',
+            color: AISkinColor.divider,
             style: BorderStyle.Solid
           })
 
@@ -71,14 +72,7 @@ export struct DocumentModal {
         .height('80%')
         
         .constraintSize({ maxWidth: 500, maxHeight: '85%', minHeight: 300 })
-        .backgroundColor(Color.White)
-        .borderRadius(20)
-        .shadow({
-          radius: 20,
-          color: 'rgba(0, 0, 0, 0.15)',
-          offsetX: 0,
-          offsetY: 10
-        })
+        .attributeModifier(new CardStyle())
         .onClick(() => {
           // Prevent backdrop click from closing when clicking modal content
         })
@@ -112,7 +106,7 @@ export struct DocumentModal {
   renderContent(content: string) {
     Text(this.formatContent(content))
       .fontSize(14)
-      .fontColor('#666666')
+      .fontColor(AISkinColor.secondary)
       .lineHeight(24)
       .width('100%')
       .textAlign(TextAlign.Start)

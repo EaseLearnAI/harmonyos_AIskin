@@ -1,3 +1,4 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 @Component
 export struct ProfileCard {
   @Prop userName: string = ''
@@ -44,7 +45,7 @@ export struct ProfileCard {
           .width(32)
           .height(32)
           .borderRadius(16)
-          .backgroundColor('#F8BBD0')
+          .backgroundColor(AISkinColor.primary)
           .justifyContent(FlexAlign.Center)
           .margin({ bottom: -4, right: -4 })
           .shadow({
@@ -64,7 +65,7 @@ export struct ProfileCard {
             Text(this.userName)
               .fontSize(18)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#1f2937')
+              .fontColor(AISkinColor.text)
               .layoutWeight(1)
 
             // Title Badge
@@ -79,7 +80,7 @@ export struct ProfileCard {
             }
             .padding({ left: 8, right: 8, top: 4, bottom: 4 })
             .borderRadius(12)
-            .backgroundColor('#FFD700')
+            .backgroundColor(AISkinColor.selected)
             .shadow({
               radius: 2,
               color: 'rgba(255, 215, 0, 0.3)',
@@ -103,7 +104,7 @@ export struct ProfileCard {
             Row()
               .width(`${this.progress}%`)
               .height(8)
-              .backgroundColor('#F8BBD0')
+              .backgroundColor(AISkinColor.primary)
               .borderRadius(4)
           }
           .width('100%')
@@ -114,12 +115,12 @@ export struct ProfileCard {
           Row() {
             Text(`Lv.${this.userLevel} 护肤专家`)
               .fontSize(11)
-              .fontColor('#6b7280')
+              .fontColor(AISkinColor.secondary)
               .layoutWeight(1)
 
             Text(`距离下一级还需 ${this.nextLevelExp} 经验`)
               .fontSize(11)
-              .fontColor('#F8BBD0')
+              .fontColor(AISkinColor.accent)
           }
           .width('100%')
         }
@@ -131,27 +132,20 @@ export struct ProfileCard {
 
       // Stats Grid
       Row() {
-        this.StatItem('已用产品', this.usedProducts.toString(), '#F8BBD0')
-        this.StatItem('护肤天数', this.skincareDays.toString(), '#C8E6C9')
-        this.StatItem('成就徽章', this.achievementCount.toString(), '#FFECB3')
+        this.StatItem('已用产品', this.usedProducts.toString(), AISkinColor.accent)
+        this.StatItem('护肤天数', this.skincareDays.toString(), AISkinColor.successSurface)
+        this.StatItem('成就徽章', this.achievementCount.toString(), AISkinColor.warningSurface)
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceAround)
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
-    .borderRadius(16)
-    .shadow({
-      radius: 8,
-      color: 'rgba(0, 0, 0, 0.08)',
-      offsetX: 0,
-      offsetY: 2
-    })
+    .attributeModifier(new CardStyle())
   }
 
   @Builder
-  StatItem(label: string, value: string, color: string) {
+  StatItem(label: string, value: string, color: ResourceColor) {
     Column() {
       Text(value)
         .fontSize(18)
@@ -161,7 +155,7 @@ export struct ProfileCard {
 
       Text(label)
         .fontSize(11)
-        .fontColor('#6b7280')
+        .fontColor(AISkinColor.secondary)
     }
     .padding({ top: 12, bottom: 12, left: 16, right: 16 })
     .layoutWeight(1)
@@ -170,13 +164,13 @@ export struct ProfileCard {
     .margin({ left: 4, right: 4 })
   }
 
-  getStatBgColor(color: string): string {
-    if (color === '#F8BBD0') {
+  getStatBgColor(color: ResourceColor): ResourceColor {
+    if (color === AISkinColor.accent) {
       return '#FFF9FB'
-    } else if (color === '#C8E6C9') {
-      return '#E8F5E9'
+    } else if (color === AISkinColor.successSurface) {
+      return AISkinColor.successSurface
     } else {
-      return '#FFF9E6'
+      return AISkinColor.muted
     }
   }
 }

@@ -1,3 +1,4 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 @Component
 export struct Modal {
   @Prop show: boolean = false
@@ -12,7 +13,7 @@ export struct Modal {
         Column()
           .width('100%')
           .height('100%')
-          .backgroundColor('rgba(0, 0, 0, 0.5)')
+          .backgroundColor(AISkinColor.scrim)
           .onClick(() => {
             if (this.onClose) {
               this.onClose()
@@ -28,7 +29,7 @@ export struct Modal {
                 Text(this.title)
                   .fontSize(20)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor('#333333')
+                  .fontColor(AISkinColor.text)
                   .layoutWeight(1)
                   .textAlign(TextAlign.Center)
               } else {
@@ -40,12 +41,12 @@ export struct Modal {
                 Button() {
                   Text('✕')
                     .fontSize(18)
-                    .fontColor('#666666')
+                    .fontColor(AISkinColor.secondary)
                 }
                 .type(ButtonType.Circle)
                 .width(32)
                 .height(32)
-                .backgroundColor('#f1f1f1')
+                .backgroundColor(AISkinColor.muted)
                 .onClick(() => {
                   if (this.onClose) {
                     this.onClose()
@@ -64,14 +65,7 @@ export struct Modal {
         }
         .width('90%')
         .constraintSize({ maxWidth: 400, maxHeight: '90%' })
-        .backgroundColor(Color.White)
-        .borderRadius(20)
-        .shadow({
-          radius: 20,
-          color: 'rgba(0, 0, 0, 0.15)',
-          offsetX: 0,
-          offsetY: 10
-        })
+        .attributeModifier(new CardStyle())
         .onClick(() => {
           // Prevent backdrop click from closing when clicking modal content
         })

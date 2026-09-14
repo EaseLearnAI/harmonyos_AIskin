@@ -1,3 +1,4 @@
+import { AISkinColor } from '../../design/AISkinTheme'
 @Component
 export struct ProductList {
   @Prop products: ProductItem[] = []
@@ -5,11 +6,11 @@ export struct ProductList {
   @Prop selectedProductIds: string[] = []
   @Prop categories: CategoryItem[] = [
     { id: 'all', name: '全部产品' },
-    { id: '洁面', name: '洁面', color: '#2196f3' },
-    { id: '精华', name: '精华', color: '#ff9800' },
-    { id: '面膜', name: '面膜', color: '#9c27b0' },
-    { id: '防晒', name: '防晒', color: '#f44336' },
-    { id: '面霜', name: '面霜', color: '#4caf50' },
+    { id: '洁面', name: '洁面', color: AISkinColor.selected },
+    { id: '精华', name: '精华', color: AISkinColor.warning },
+    { id: '面膜', name: '面膜', color: AISkinColor.accent },
+    { id: '防晒', name: '防晒', color: AISkinColor.danger },
+    { id: '面霜', name: '面霜', color: AISkinColor.success },
     { id: '爽肤水', name: '爽肤水', color: '#03a9f4' },
     { id: '乳液', name: '乳液', color: '#8bc34a' },
     { id: '眼霜', name: '眼霜', color: '#673ab7' }
@@ -47,8 +48,8 @@ export struct ProductList {
               }
             }
             .fontSize(12)
-            .fontColor(this.selectedCategory === category.id ? Color.White : '#616161')
-            .backgroundColor(this.selectedCategory === category.id ? '#F8BBD0' : Color.White)
+            .fontColor(this.selectedCategory === category.id ? Color.White : AISkinColor.secondary)
+            .backgroundColor(this.selectedCategory === category.id ? AISkinColor.primary : AISkinColor.elevated)
             .padding({ left: 12, right: 12, top: 6, bottom: 6 })
             .borderRadius(9999)
             .margin({ right: 8 })
@@ -77,8 +78,8 @@ export struct ProductList {
         }
         .width('100%')
         .layoutWeight(1)
-        .divider({ strokeWidth: 1, color: '#f0f0f0', startMargin: 16, endMargin: 16 })
-        .padding({ right: 20 })
+        .divider({ strokeWidth: 1, color: AISkinColor.muted, startMargin: 16, endMargin: 16 })
+        .padding({ left: 24, right: 24 })
       }
     }
     .width('100%')
@@ -107,7 +108,7 @@ export struct ProductList {
           .margin({ right: 12 })
       }
 
-      Image(product.imageUrl || 'https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?w=200')
+      Image(product.imageUrl || $r('app.media.product_capture'))
         .width(64)
         .height(64)
         .borderRadius(8)
@@ -121,7 +122,7 @@ export struct ProductList {
           Text(product.name || '未命名产品')
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
@@ -141,7 +142,7 @@ export struct ProductList {
 
         Text(product.description || '暂无描述')
           .fontSize(13)
-          .fontColor('#757575')
+          .fontColor(AISkinColor.secondary)
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .margin({ top: 4, bottom: 8 })
@@ -150,8 +151,8 @@ export struct ProductList {
           if (product.label) {
             Text(product.label)
               .fontSize(11)
-              .fontColor('#1976d2')
-              .backgroundColor('#e3f2fd')
+              .fontColor(AISkinColor.accent)
+              .backgroundColor(AISkinColor.selected)
               .padding({ left: 6, right: 6, top: 2, bottom: 2 })
               .borderRadius(8)
               .margin({ right: 8 })
@@ -160,17 +161,18 @@ export struct ProductList {
           if (product.efficacyScore) {
             Text(`功效 ${product.efficacyScore}`)
               .fontSize(11)
-              .fontColor('#e65100')
-              .backgroundColor('#fff3e0')
+              .fontColor(AISkinColor.warning)
+              .backgroundColor(AISkinColor.warningSurface)
               .padding({ left: 6, right: 6, top: 2, bottom: 2 })
               .borderRadius(8)
               .margin({ right: 8 })
           }
 
+          if (product.openingStatus === 'unopened') { Text('未开封').fontSize(11).fontColor(AISkinColor.secondary) }
           if (product.openingDate) {
             Text(this.formatDate(product.openingDate))
               .fontSize(11)
-              .fontColor('#9e9e9e')
+              .fontColor(AISkinColor.secondary)
           }
         }
         .width('100%')
@@ -181,9 +183,9 @@ export struct ProductList {
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .padding({ left: 16, top: 16, bottom: 16, right: 20 })
-    .margin({ right: 20 })
-    .backgroundColor(Color.White)
+    .padding(20)
+    .margin({ bottom: 12 }).borderRadius(24)
+    .backgroundColor(AISkinColor.surface)
     .onClick(() => {
       if (!this.selectionMode && this.onSelectProduct) {
         this.onSelectProduct(product)
@@ -200,7 +202,7 @@ export struct ProductList {
 
       Text('暂无产品')
         .fontSize(16)
-        .fontColor('#757575')
+        .fontColor(AISkinColor.secondary)
     }
     .width('100%')
     .height(200)
@@ -208,15 +210,15 @@ export struct ProductList {
   }
 
   getSafetyColor(score: number): ResourceColor {
-    if (score >= 90) return '#2e7d32'
-    if (score >= 70) return '#ff8f00'
-    return '#c62828'
+    if (score >= 90) return AISkinColor.success
+    if (score >= 70) return AISkinColor.warning
+    return AISkinColor.danger
   }
 
   getSafetyBgColor(score: number): ResourceColor {
-    if (score >= 90) return '#c8e6c9'
-    if (score >= 70) return '#fff9c4'
-    return '#ffcdd2'
+    if (score >= 90) return AISkinColor.successSurface
+    if (score >= 70) return AISkinColor.warningSurface
+    return AISkinColor.dangerSurface
   }
 
   formatDate(dateString: string): string {
@@ -239,12 +241,12 @@ export interface ProductItem {
   safetyScore?: number
   efficacyScore?: number
   overallRating?: number
+  openingStatus?: string
   openingDate?: string
 }
 
 export interface CategoryItem {
   id: string
   name: string
-  color?: string
+  color?: ResourceColor
 }
-

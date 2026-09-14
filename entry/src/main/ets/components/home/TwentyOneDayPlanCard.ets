@@ -1,3 +1,4 @@
+import { AISkinColor } from '../../design/AISkinTheme'
 @Component
 export struct TwentyOneDayPlanCard {
   build() {
@@ -5,12 +6,12 @@ export struct TwentyOneDayPlanCard {
       Text('21天护肤计划')
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#e75480')
+        .fontColor(AISkinColor.accent)
         .margin({ bottom: 8 })
 
       Text('点击开启你的21天护肤挑战！')
         .fontSize(14)
-        .fontColor('#b85c8e')
+        .fontColor(AISkinColor.accent)
     }
     .width('100%')
     .padding(16)

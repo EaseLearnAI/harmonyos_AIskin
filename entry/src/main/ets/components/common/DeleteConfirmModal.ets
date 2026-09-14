@@ -1,3 +1,4 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 @Component
 export struct DeleteConfirmModal {
   @Prop show: boolean = false
@@ -12,7 +13,7 @@ export struct DeleteConfirmModal {
         Column()
           .width('100%')
           .height('100%')
-          .backgroundColor('rgba(0, 0, 0, 0.5)')
+          .backgroundColor(AISkinColor.scrim)
           .onClick(() => {
             if (this.onCancel) {
               this.onCancel()
@@ -26,7 +27,7 @@ export struct DeleteConfirmModal {
             Column() {
               Text('⚠️')
                 .fontSize(32)
-                .fontColor('#ff9800')
+                .fontColor(AISkinColor.warning)
             }
             .width(48)
             .height(48)
@@ -36,7 +37,7 @@ export struct DeleteConfirmModal {
             Text('确认删除')
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
-              .fontColor('#333333')
+              .fontColor(AISkinColor.text)
           }
           .width('100%')
           .justifyContent(FlexAlign.Center)
@@ -45,7 +46,7 @@ export struct DeleteConfirmModal {
           // Message
           Text(`确定要删除"${this.productName}"的分析结果吗？此操作无法撤销。`)
             .fontSize(15)
-            .fontColor('#666666')
+            .fontColor(AISkinColor.secondary)
             .textAlign(TextAlign.Center)
             .lineHeight(22)
             .margin({ bottom: 24 })
@@ -56,13 +57,13 @@ export struct DeleteConfirmModal {
             Button('取消')
               .layoutWeight(1)
               .height(44)
-              .backgroundColor(Color.White)
-              .fontColor('#424242')
+              .backgroundColor(AISkinColor.surface)
+              .fontColor(AISkinColor.text)
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
               .border({
                 width: 1,
-                color: '#e0e0e0',
+                color: AISkinColor.divider,
                 style: BorderStyle.Solid
               })
               .borderRadius(8)
@@ -77,7 +78,7 @@ export struct DeleteConfirmModal {
             Button('确认删除')
               .layoutWeight(1)
               .height(44)
-              .backgroundColor('#F44336')
+              .backgroundColor(AISkinColor.danger)
               .fontColor(Color.White)
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
@@ -94,14 +95,7 @@ export struct DeleteConfirmModal {
         .width('90%')
         .constraintSize({ maxWidth: 400 })
         .padding(24)
-        .backgroundColor(Color.White)
-        .borderRadius(20)
-        .shadow({
-          radius: 20,
-          color: 'rgba(0, 0, 0, 0.15)',
-          offsetX: 0,
-          offsetY: 10
-        })
+        .attributeModifier(new CardStyle())
         .onClick(() => {
           // Prevent backdrop click from closing when clicking modal content
         })

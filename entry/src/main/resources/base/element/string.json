@@ -11,10 +11,6 @@
     {
       "name": "EntryAbility_label",
       "value": "析肤AI"
-    },
-    {
-      "name": "read_imagevideo_reason",
-      "value": "应用需要访问您的相册以选择皮肤分析图片，用于AI智能皮肤检测功能"
     }
   ]
 }

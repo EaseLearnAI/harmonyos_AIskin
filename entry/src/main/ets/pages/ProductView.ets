@@ -1,3 +1,5 @@
+import { ProcessingPanel } from '../components/common/ProcessingPanel'
+import { AISkinColor, CardStyle } from '../design/AISkinTheme'
 import { AppHeader } from '../components/common/AppHeader'
 import { AddProduct } from '../components/product/AddProduct'
 import { ProductList, ProductItem } from '../components/product/ProductList'
@@ -10,6 +12,7 @@ import { common } from '@kit.AbilityKit'
 @Component
 export struct ProductView {
   @State products: ProductItem[] = []
+  @State loadError: string = ''
   @State loading: boolean = false
   @State conflictMode: boolean = false
   @State selectedProductIds: string[] = []
@@ -30,12 +33,15 @@ export struct ProductView {
     }
   }
 
+  onProfile?: () => void
+
   build() {
     Stack() {
       Column() {
         // Header
         AppHeader({
-          title: '护肤产品库',
+        onProfile: this.onProfile,
+          title: '护肤柜',
           icon: 'paw',
           showBackButton: false,
           bgColor: 'bg-sakura'
@@ -54,15 +60,16 @@ export struct ProductView {
               this.enableConflictMode()
             }
           })
-          .margin({ top: 14, left: 14, right: 14, bottom: 12 })
+          .margin({ top: 16, left: 24, right: 24, bottom: 16 })
 
           // Conflict Mode Header
           if (this.conflictMode) {
             this.ConflictModeHeader()
           }
 
+          if (this.loadError) { Button(this.loadError + ' · 重试').fontColor(AISkinColor.danger).backgroundColor(Color.Transparent).onClick(() => { this.loadProducts() }) }
+          if (this.loading) { LoadingProgress().width(36).height(36).color(AISkinColor.accent) }
           // Product List - Scrollable
-          Scroll() {
             ProductList({
               products: this.products,
               selectionMode: this.conflictMode,
@@ -78,10 +85,7 @@ export struct ProductView {
               }
             })
             .width('100%')
-            .margin({ left: 14, right: 14 })
-          }
           .layoutWeight(1)
-          .scrollBar(BarState.Auto)
           .width('100%')
         }
         .layoutWeight(1)
@@ -89,7 +93,8 @@ export struct ProductView {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#fff9fb')
+      .backgroundColor(Color.Transparent)
+      .padding({ bottom: 70 })
 
       // Upload Modal - Floating on top
       if (this.showUploadModal) {
@@ -127,14 +132,14 @@ export struct ProductView {
           Text('选择需要检测冲突的产品')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
         }
         .layoutWeight(1)
 
         Button('分析冲突')
           .fontSize(12)
           .fontColor(Color.White)
-          .backgroundColor(this.selectedProductIds.length >= 2 ? '#CE93D8' : '#E0E0E0')
+          .backgroundColor(this.selectedProductIds.length >= 2 ? AISkinColor.primary : AISkinColor.divider)
           .padding({ left: 12, right: 12, top: 6, bottom: 6 })
           .borderRadius(6)
           .enabled(this.selectedProductIds.length >= 2)
@@ -145,8 +150,8 @@ export struct ProductView {
 
         Button('取消')
           .fontSize(12)
-          .fontColor('#757575')
-          .backgroundColor('#f5f5f5')
+          .fontColor(AISkinColor.secondary)
+          .backgroundColor(AISkinColor.muted)
           .padding({ left: 12, right: 12, top: 6, bottom: 6 })
           .borderRadius(6)
           .onClick(() => {
@@ -158,12 +163,11 @@ export struct ProductView {
 
       Text(`已选择 ${this.selectedProductIds.length} 个产品 (至少需要2个)`)
         .fontSize(12)
-        .fontColor('#757575')
+        .fontColor(AISkinColor.secondary)
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
-    .borderRadius(16)
+    .attributeModifier(new CardStyle())
     .margin({ left: 14, right: 14, bottom: 12 })
     .shadow({
       radius: 4,
@@ -176,6 +180,7 @@ export struct ProductView {
   async loadProducts() {
     console.log('===== 📚 加载用户产品列表 =====')
     this.loading = true
+    this.loadError = ''
     
     try {
       // 获取当前用户
@@ -189,7 +194,6 @@ export struct ProductView {
       }
 
       const userId = user.id
-      console.log(`📊 用户ID: ${userId}`)
 
       // 调用API获取产品列表
       const response = await this.productApiService.getUserProducts(userId)
@@ -209,16 +213,19 @@ export struct ProductView {
             safetyScore: product.safetyScore,
             efficacyScore: product.efficacyScore,
             overallRating: product.overallRating,
-            openingDate: product.openingDate || product.createdAt || new Date().toISOString()
+            openingDate: product.openingDate || '',
+            openingStatus: product.openingStatus || 'unknown'
           }
           return item
         })
       } else {
         console.error('❌ 获取产品列表失败:', response.message)
+        this.loadError = response.message || '护肤柜加载失败，请重试'
         this.products = []
       }
     } catch (error) {
-      console.error('❌ Error loading products:', JSON.stringify(error))
+      this.loadError = '护肤柜加载失败，请重试'
+      console.error('❌ Error loading products')
       this.products = []
     } finally {
       this.loading = false
@@ -253,8 +260,6 @@ export struct ProductView {
 
   async handleDeleteProduct(productId: string) {
     console.log(`===== 🗑️ 删除产品 =====`)
-    console.log(`🆔 产品ID: ${productId}`)
-
     try {
       const response = await this.productApiService.deleteProduct(productId)
       
@@ -266,7 +271,7 @@ export struct ProductView {
         console.error('❌ 删除产品失败:', response.message)
       }
     } catch (error) {
-      console.error('❌ 删除产品异常:', JSON.stringify(error))
+      console.error('❌ 删除产品异常')
     }
   }
 
@@ -286,8 +291,6 @@ export struct ProductView {
     }
 
     console.log('===== ⚠️ 开始冲突分析 =====')
-    console.log(`📊 分析产品: ${this.selectedProductIds.join(', ')}`)
-
     // Show analyzing overlay
     this.analyzingConflict = true
 
@@ -296,8 +299,6 @@ export struct ProductView {
 
       if (response.success && response.data) {
         console.log('✅ 冲突分析成功')
-        console.info('冲突分析结果:', JSON.stringify(response.data))
-        
         // Hide analyzing overlay
         this.analyzingConflict = false
         
@@ -310,7 +311,7 @@ export struct ProductView {
         this.analyzingConflict = false
       }
     } catch (error) {
-      console.error('❌ 冲突分析异常:', JSON.stringify(error))
+      console.error('❌ 冲突分析异常')
       this.analyzingConflict = false
     }
 
@@ -319,40 +320,7 @@ export struct ProductView {
 
   @Builder
   AnalyzingConflictOverlay() {
-    Column() {
-      Column() {
-        LoadingProgress()
-          .width(60)
-          .height(60)
-          .color('#F8BBD0')
-          .margin({ bottom: 20 })
-
-        Text('正在分析冲突...')
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#333333')
-          .margin({ bottom: 8 })
-
-        Text('请稍候，正在检测产品成分冲突')
-          .fontSize(14)
-          .fontColor('#666666')
-      }
-      .width(280)
-      .padding(32)
-      .backgroundColor(Color.White)
-      .borderRadius(20)
-      .shadow({
-        radius: 20,
-        color: 'rgba(0, 0, 0, 0.15)',
-        offsetX: 0,
-        offsetY: 10
-      })
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('rgba(0, 0, 0, 0.5)')
-    .justifyContent(FlexAlign.Center)
-    .zIndex(10000)
+    Stack() { ProcessingPanel({ title: '冲突检测', message: '正在核对产品成分与搭配建议' }) }
+      .width('100%').height('100%').backgroundColor(AISkinColor.scrim)
   }
 }
-

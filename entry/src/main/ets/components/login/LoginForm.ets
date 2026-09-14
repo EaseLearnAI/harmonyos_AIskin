@@ -1,10 +1,10 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 import { UserData } from '../../services/AuthService'
 
 @Component
 export struct LoginForm {
   @State phone: string = ''
   @State password: string = ''
-  @State remember: boolean = false
   @State showPassword: boolean = false
   @State loading: boolean = false
   @State error: boolean = false
@@ -27,12 +27,12 @@ export struct LoginForm {
             .margin({ right: 8 })
           Text(this.errorMessage)
             .fontSize(14)
-            .fontColor('#b71c1c')
+            .fontColor(AISkinColor.danger)
             .flexGrow(1)
         }
         .width('100%')
         .padding(12)
-        .backgroundColor('#ffebee')
+        .backgroundColor(AISkinColor.dangerSurface)
         .borderRadius(8)
         .margin({ bottom: 16 })
       }
@@ -40,14 +40,14 @@ export struct LoginForm {
       // Phone Input
       Column() {
         Row() {
-          Text('📱')
+          Text('')
             .fontSize(16)
             .margin({ right: 8 })
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
           Text('手机号')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
         }
         .width('100%')
         .margin({ bottom: 8 })
@@ -58,15 +58,17 @@ export struct LoginForm {
           .height(44)
           .padding({ left: 12, right: 12 })
           .fontSize(14)
-          .backgroundColor('#fafafa')
+          .fontColor(AISkinColor.text)
+          .placeholderColor(AISkinColor.secondary)
+          .backgroundColor(AISkinColor.muted)
           .borderRadius(8)
           .border({
             width: this.validationErrors.phone ? 1 : 0,
-            color: this.validationErrors.phone ? '#f44336' : '#e0e0e0',
+            color: this.validationErrors.phone ? AISkinColor.danger : AISkinColor.divider,
             style: BorderStyle.Solid
           })
           .onChange((value: string) => {
-            this.phone = value
+            this.phone = value.trim()
             this.validationErrors.phone = ''
             this.error = false
           })
@@ -74,7 +76,7 @@ export struct LoginForm {
         if (this.validationErrors.phone) {
           Text(this.validationErrors.phone)
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
             .margin({ top: 4 })
             .width('100%')
         }
@@ -85,30 +87,32 @@ export struct LoginForm {
       // Password Input
       Column() {
         Row() {
-          Text('🔒')
+          Text('')
             .fontSize(16)
             .margin({ right: 8 })
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
           Text('密码')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
         }
         .width('100%')
         .margin({ bottom: 8 })
 
         Stack({ alignContent: Alignment.TopEnd }) {
           TextInput({ placeholder: '请输入密码', text: this.password })
-            .type(this.showPassword ? InputType.Normal : InputType.Password)
+            .type(this.showPassword ? InputType.Normal : InputType.Password).showPasswordIcon(false)
             .width('100%')
             .height(44)
             .padding({ left: 12, right: 48 })
             .fontSize(14)
-            .backgroundColor('#fafafa')
+            .fontColor(AISkinColor.text)
+            .placeholderColor(AISkinColor.secondary)
+            .backgroundColor(AISkinColor.muted)
             .borderRadius(8)
             .border({
               width: this.validationErrors.password ? 1 : 0,
-              color: this.validationErrors.password ? '#f44336' : '#e0e0e0',
+              color: this.validationErrors.password ? AISkinColor.danger : AISkinColor.divider,
               style: BorderStyle.Solid
             })
             .onChange((value: string) => {
@@ -118,7 +122,7 @@ export struct LoginForm {
             })
 
           Button() {
-            Text(this.showPassword ? '🙈' : '👁️')
+            Text(this.showPassword ? '隐藏' : '显示')
               .fontSize(16)
           }
           .type(ButtonType.Normal)
@@ -136,36 +140,13 @@ export struct LoginForm {
         if (this.validationErrors.password) {
           Text(this.validationErrors.password)
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
             .margin({ top: 4 })
             .width('100%')
         }
       }
       .width('100%')
       .margin({ bottom: 20 })
-
-      // Form Actions
-      Row() {
-        Row() {
-          Checkbox()
-            .select(this.remember)
-            .selectedColor('#F8BBD0')
-            .onChange((checked: boolean) => {
-              this.remember = checked
-            })
-          Text('记住我')
-            .fontSize(14)
-            .fontColor('#424242')
-            .margin({ left: 8 })
-        }
-        .onClick(() => {
-          this.remember = !this.remember
-        })
-
-        Blank()
-      }
-      .width('100%')
-      .margin({ bottom: 24 })
 
       // Login Button
       Button() {
@@ -183,8 +164,8 @@ export struct LoginForm {
       }
       .width('100%')
       .height(44)
-      .backgroundColor('#F8BBD0')
-      .borderRadius(8)
+      .backgroundColor(AISkinColor.primary)
+      .borderRadius(16)
       .enabled(!this.loading)
       .opacity(this.loading ? 0.7 : 1)
       .onClick(() => {
@@ -195,14 +176,13 @@ export struct LoginForm {
       Row() {
         Text('还没有账号？')
           .fontSize(14)
-          .fontColor('#666666')
+          .fontColor(AISkinColor.secondary)
         Text('立即注册')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#F8BBD0')
+          .fontColor(AISkinColor.accent)
           .margin({ left: 4 })
           .onClick(() => {
-            // TODO: Navigate to register page
             if (this.onNavigateToRegister) {
               this.onNavigateToRegister()
             }
@@ -214,14 +194,7 @@ export struct LoginForm {
     }
     .width('100%')
     .padding(24)
-    .backgroundColor(Color.White)
-    .borderRadius(16)
-    .shadow({
-      radius: 20,
-      color: 'rgba(255, 182, 193, 0.15)',
-      offsetX: 0,
-      offsetY: 8
-    })
+    .attributeModifier(new CardStyle())
   }
 
   onNavigateToRegister?: () => void
@@ -233,6 +206,7 @@ export struct LoginForm {
       password: ''
     }
 
+    this.phone = this.phone.trim()
     // Validate phone
     if (!this.phone) {
       this.validationErrors.phone = '请输入手机号'
@@ -272,7 +246,7 @@ export struct LoginForm {
       const response = await authService.login({
         phone: this.phone,
         password: this.password,
-        remember: this.remember
+        remember: false
       })
 
       // 检查组件是否已被销毁
@@ -312,7 +286,7 @@ export struct LoginForm {
         }
         this.errorMessage = errorMsg
         this.loading = false
-        console.error('登录错误:', JSON.stringify(err))
+        console.error('登录错误')
       }
     }
   }
@@ -327,4 +301,3 @@ interface ValidationErrors {
   phone?: string
   password?: string
 }
-

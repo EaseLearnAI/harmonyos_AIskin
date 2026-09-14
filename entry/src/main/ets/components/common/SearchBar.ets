@@ -1,3 +1,4 @@
+import { AISkinColor } from '../../design/AISkinTheme'
 @Component
 export struct SearchBar {
   @Prop placeholder: string = '搜索护肤品或成分'
@@ -7,7 +8,7 @@ export struct SearchBar {
     Row() {
       Text('🔍')
         .fontSize(16)
-        .fontColor('#9e9e9e')
+        .fontColor(AISkinColor.secondary)
         .margin({ left: 16 })
 
       TextInput({ placeholder: this.placeholder, text: this.searchQuery })
@@ -17,8 +18,8 @@ export struct SearchBar {
         .borderRadius(22)
         .padding({ left: 12, right: 16 })
         .fontSize(14)
-        .fontColor('#424242')
-        .placeholderColor('#9e9e9e')
+        .fontColor(AISkinColor.text)
+        .placeholderColor(AISkinColor.secondary)
         .onChange((value: string) => {
           this.searchQuery = value
         })
@@ -28,4 +29,3 @@ export struct SearchBar {
     .padding({ left: 0, right: 16, top: 8, bottom: 8 })
   }
 }
-

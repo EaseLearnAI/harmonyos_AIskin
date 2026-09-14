@@ -67,6 +67,9 @@ export interface PlanListData {
 /**
  * 方案详情响应数据
  */
+export interface DailyStep { step: number; completed: boolean }
+export interface DailyProgress { date: string; timezone: string; morning: DailyStep[]; evening: DailyStep[]; completedCount: number; totalCount: number }
+export interface DailyResponse { daily: DailyProgress }
 export interface PlanDetailData {
   plan?: PlanData
 }
@@ -107,15 +110,39 @@ export class PlanApiService {
    */
   private getAuthHeaders(): Record<string, string> {
     const token = this.authService.getToken()
-    console.log(`🔑 获取Token: ${token ? '已找到' : '未找到'}`)
     if (!token) {
       console.warn('⚠️ Token为空，请求将不带认证头')
       return {}
     }
     const headers: Record<string, string> = {} as Record<string, string>
     headers['Authorization'] = `Bearer ${token}`
-    console.log(`📦 认证头: Authorization: Bearer ${token.substring(0, 20)}...`)
     return headers
+  }
+
+  async getActivePlan(): Promise<PlanApiResponse<PlanDetailData>> {
+    return this.httpService.get<PlanDetailData>('/plans/active', this.getAuthHeaders())
+  }
+  async adoptPlan(planId: string): Promise<PlanApiResponse<PlanDetailData>> {
+    const body: Record<string, Object | string | number | boolean> = {} as Record<string, Object | string | number | boolean>
+    body.planId = planId
+    return this.httpService.put<PlanDetailData>('/plans/active', body, this.getAuthHeaders())
+  }
+  private localDate(): string {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
+  }
+  private timezone(): string { return Intl.DateTimeFormat().resolvedOptions().timeZone }
+  async getDailyProgress(planId: string): Promise<PlanApiResponse<DailyResponse>> {
+    return this.httpService.get<DailyResponse>(`/plans/${planId}/daily?date=${this.localDate()}&timezone=${encodeURIComponent(this.timezone())}`, this.getAuthHeaders())
+  }
+  async completeDailyStep(planId: string, period: string, step: number, completed: boolean): Promise<PlanApiResponse<DailyResponse>> {
+    const body: Record<string, Object | string | number | boolean> = {} as Record<string, Object | string | number | boolean>
+    body.date = this.localDate()
+    body.timezone = this.timezone()
+    body.period = period
+    body.step = step
+    body.completed = completed
+    return this.httpService.put<DailyResponse>(`/plans/${planId}/daily/steps`, body, this.getAuthHeaders())
   }
 
   /**
@@ -126,12 +153,6 @@ export class PlanApiService {
   async createPlan(planData: CreatePlanRequest): Promise<PlanApiResponse<PlanDetailData>> {
     console.log('===== 🎯 创建个性化护肤方案 =====')
     console.log(`📡 API请求: 创建方案`)
-    console.log(`📋 请求数据:`, {
-      需求: planData.requirement || '未指定',
-      护肤关注点: planData.skinConcerns || [],
-      自定义需求: planData.customRequirements || '无',
-      年龄: planData.age || '未指定'
-    })
 
     const headers = this.getAuthHeaders()
     
@@ -157,18 +178,7 @@ export class PlanApiService {
     )
 
     if (response.success && response.data) {
-      const plan = response.data.plan
       console.log('✅ 方案创建成功')
-      console.log('📋 方案详情:', {
-        方案ID: plan?._id || plan?.id,
-        方案名称: plan?.name,
-        用户年龄: plan?.userAge,
-        护肤需求: plan?.skinConcerns,
-        早晨步骤数: plan?.morning?.length || 0,
-        晚间步骤数: plan?.evening?.length || 0,
-        建议数: plan?.recommendations?.length || 0
-      })
-      console.log('📋 完整响应数据:', JSON.stringify(response.data))
       return {
         success: true,
         data: response.data
@@ -176,11 +186,6 @@ export class PlanApiService {
     }
 
     console.error('❌ 创建方案失败:', response.message)
-    console.error('🚨 错误详情:', {
-      状态码: response.message,
-      错误信息: response.message || '创建方案失败',
-      请求数据: planData
-    })
     return {
       success: false,
       message: response.message || '创建方案失败'
@@ -206,22 +211,6 @@ export class PlanApiService {
       console.log('✅ 方案列表获取成功')
       console.log(`📊 方案数量: ${plans.length}`)
       
-      // 定义方案列表项接口
-      interface PlanListItem {
-        ID?: string
-        名称?: string
-        创建时间?: string
-      }
-      
-      const planListItems: PlanListItem[] = plans.map((p: PlanData): PlanListItem => {
-        return {
-          ID: p._id || p.id,
-          名称: p.name,
-          创建时间: p.createdAt
-        }
-      })
-      console.log('📋 方案列表:', planListItems)
-      
       return {
         success: true,
         data: response.data,
@@ -243,7 +232,6 @@ export class PlanApiService {
    */
   async getPlan(planId: string): Promise<PlanApiResponse<PlanDetailData>> {
     console.log('===== 🔍 获取方案详情 =====')
-    console.log(`🆔 方案ID: ${planId}`)
     console.log(`📡 API请求: 获取方案详情`)
 
     const headers = this.getAuthHeaders()
@@ -253,14 +241,7 @@ export class PlanApiService {
     )
 
     if (response.success && response.data) {
-      const plan = response.data.plan
       console.log('✅ 方案详情获取成功')
-      console.log('📋 方案详情:', {
-        ID: plan?._id || plan?.id,
-        名称: plan?.name,
-        早晨步骤数: plan?.morning?.length || 0,
-        晚间步骤数: plan?.evening?.length || 0
-      })
       return {
         success: true,
         data: response.data
@@ -281,7 +262,6 @@ export class PlanApiService {
    */
   async deletePlan(planId: string): Promise<PlanApiResponse<Record<string, string>>> {
     console.log('===== 🗑️ 删除护肤方案 =====')
-    console.log(`🆔 方案ID: ${planId}`)
     console.log(`📡 API请求: 删除方案`)
 
     const headers = this.getAuthHeaders()
@@ -312,12 +292,6 @@ export class PlanApiService {
    */
   async updateStepCompleted(planId: string, updateData: UpdateStepRequest): Promise<PlanApiResponse<PlanDetailData>> {
     console.log('===== ✅ 更新步骤完成状态 =====')
-    console.log(`🆔 方案ID: ${planId}`)
-    console.log(`📋 更新数据:`, {
-      时段: updateData.period,
-      步骤: updateData.step,
-      完成状态: updateData.completed
-    })
     console.log(`📡 API请求: 更新步骤状态`)
 
     const headers = this.getAuthHeaders()
@@ -353,4 +327,3 @@ export class PlanApiService {
     }
   }
 }
-

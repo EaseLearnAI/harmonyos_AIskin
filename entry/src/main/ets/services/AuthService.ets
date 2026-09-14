@@ -68,17 +68,13 @@ export class AuthService {
     try {
       return JSON.parse(userStr) as UserData
     } catch (err) {
-      console.error('Failed to parse user data:', JSON.stringify(err))
+      console.error('Failed to parse stored user data')
       return null
     }
   }
 
   getToken(): string | null {
     const token = AppStorage.get<string>(this.STORAGE_KEY_TOKEN) || null
-    console.log(`🔍 从AppStorage获取Token: ${token ? '已找到' : '未找到'}`)
-    if (token) {
-      console.log(`📋 Token内容: ${token.substring(0, 20)}...`)
-    }
     return token
   }
 
@@ -89,26 +85,11 @@ export class AuthService {
     }
     
     user.token = token
-    console.log(`💾 保存Token到AppStorage: ${token.substring(0, 20)}...`)
     
     // 使用setOrCreate确保能够正确保存
     AppStorage.setOrCreate<string>(this.STORAGE_KEY_TOKEN, token)
     AppStorage.setOrCreate<string>(this.STORAGE_KEY_USER, JSON.stringify(user))
     
-    // 立即验证保存是否成功（使用setTimeout确保写入完成）
-    setTimeout(() => {
-    const savedToken = AppStorage.get<string>(this.STORAGE_KEY_TOKEN)
-      if (savedToken && savedToken === token) {
-        console.log(`✅ Token保存验证: 成功`)
-      console.log(`📋 保存的Token: ${savedToken.substring(0, 20)}...`)
-      } else {
-        console.warn(`⚠️ Token保存验证: 失败或值不匹配`)
-        console.warn(`📋 期望的Token: ${token.substring(0, 20)}...`)
-        console.warn(`📋 实际的Token: ${savedToken ? savedToken.substring(0, 20) + '...' : '空'}`)
-        // 重新尝试保存
-        AppStorage.setOrCreate<string>(this.STORAGE_KEY_TOKEN, token)
-      }
-    }, 10)
   }
 
   logout(): void {

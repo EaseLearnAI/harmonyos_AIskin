@@ -63,6 +63,11 @@ interface GetUserApiResponse {
   message?: string
 }
 
+interface DeleteAccountApiResponse {
+  success: boolean
+  message?: string
+}
+
 /**
  * 后端返回的用户数据接口
  */
@@ -115,7 +120,6 @@ export class AuthApiService {
    */
   async login(credentials: LoginRequest): Promise<LoginApiResponse> {
     console.log('🔐 开始登录请求')
-    console.log(`📱 手机号: ${credentials.phone}`)
 
     const requestBody: LoginRequestBody = {
       phone: credentials.phone,
@@ -130,13 +134,8 @@ export class AuthApiService {
     if (response.success && response.data) {
       const backendData = response.data as BackendResponseData
       console.log('✅ 登录成功')
-      console.log(`🔑 响应中的Token: ${response.token ? response.token.substring(0, 20) + '...' : '未找到'}`)
-      console.log(`🔑 Data中的Token: ${backendData.token ? backendData.token.substring(0, 20) + '...' : '未找到'}`)
       
       if (backendData.user) {
-        console.log(`👤 用户ID: ${backendData.user._id || backendData.user.id}`)
-        console.log(`📱 手机号: ${backendData.user.phone}`)
-        console.log(`👤 用户名: ${backendData.user.name}`)
 
         // 转换用户数据格式
         const userData: UserData = {
@@ -148,7 +147,6 @@ export class AuthApiService {
 
         // 优先使用response.token（响应体顶层的token）
         const token = response.token || backendData.token || ''
-        console.log(`🔑 最终使用的Token: ${token ? token.substring(0, 20) + '...' : '未找到'}`)
 
         const loginResponse: LoginResponse = {
           user: userData,
@@ -176,9 +174,6 @@ export class AuthApiService {
    */
   async register(userData: RegisterRequest): Promise<RegisterApiResponse> {
     console.log('🔐 开始注册请求')
-    console.log(`📱 手机号: ${userData.phone}`)
-    console.log(`👤 用户名: ${userData.name}`)
-    console.log(`⚧️ 性别: ${userData.gender}`)
 
     const requestBody: RegisterRequestBody = {
       name: userData.name,
@@ -197,9 +192,6 @@ export class AuthApiService {
       console.log('✅ 注册成功')
       
       if (backendData.user) {
-        console.log(`👤 用户ID: ${backendData.user._id || backendData.user.id}`)
-        console.log(`📱 手机号: ${backendData.user.phone}`)
-        console.log(`👤 用户名: ${backendData.user.name}`)
 
         // 转换用户数据格式
         const user: UserData = {
@@ -268,6 +260,21 @@ export class AuthApiService {
     return {
       success: false,
       message: response.message || '获取用户信息失败'
+    }
+  }
+
+
+  async deleteAccount(token: string): Promise<DeleteAccountApiResponse> {
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`
+    }
+    const response = await this.httpService.delete<Record<string, string>>(
+      '/users/delete-account',
+      headers
+    )
+    return {
+      success: response.success,
+      message: response.message
     }
   }
 }

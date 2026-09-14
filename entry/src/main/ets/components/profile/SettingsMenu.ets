@@ -1,35 +1,36 @@
+import { AISkinColor } from '../../design/AISkinTheme'
 @Component
 export struct SettingsMenu {
   onSettingClick?: (settingId: string) => void
 
   private settings: SettingItem[] = [
     {
-      id: 'notification',
-      title: '消息通知',
-      description: '管理护肤提醒和系统通知',
-      icon: '🔔',
-      color: '#42A5F5'
+      id: 'privacy',
+      title: '隐私政策',
+      description: '查看数据收集、AI处理与删除说明',
+      icon: '○',
+      color: AISkinColor.accent
     },
     {
-      id: 'theme',
-      title: '主题设置',
-      description: '自定义皮肤和背景',
-      icon: '🎨',
-      color: '#AB47BC'
+      id: 'terms',
+      title: '使用条款',
+      description: '查看服务范围与免责声明',
+      icon: '≡',
+      color: AISkinColor.accent
     },
     {
       id: 'help',
       title: '帮助与反馈',
       description: '提供使用建议和问题反馈',
-      icon: '❓',
-      color: '#66BB6A'
+      icon: '?',
+      color: AISkinColor.success
     },
     {
-      id: 'about',
-      title: '关于我们',
-      description: '了解产品和服务',
-      icon: 'ℹ️',
-      color: '#EF5350'
+      id: 'delete-account',
+      title: '注销账号',
+      description: '永久删除账号及全部关联数据',
+      icon: '−',
+      color: AISkinColor.danger
     }
   ]
 
@@ -48,7 +49,7 @@ export struct SettingsMenu {
       // Icon
       Row() {
         Text(setting.icon)
-          .fontSize(18)
+          .fontSize(18).fontColor(AISkinColor.accent)
       }
       .width(40)
       .height(40)
@@ -62,12 +63,12 @@ export struct SettingsMenu {
         Text(setting.title)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#1f2937')
+          .fontColor(AISkinColor.text)
           .margin({ bottom: 2 })
 
         Text(setting.description)
           .fontSize(11)
-          .fontColor('#6b7280')
+          .fontColor(AISkinColor.secondary)
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
@@ -75,11 +76,11 @@ export struct SettingsMenu {
       // Arrow
       Text('›')
         .fontSize(20)
-        .fontColor('#d1d5db')
+        .fontColor(AISkinColor.secondary)
     }
     .width('100%')
     .padding(12)
-    .backgroundColor(Color.White)
+    .backgroundColor(AISkinColor.surface)
     .borderRadius(12)
     .margin({ bottom: 8 })
     .onClick(() => {
@@ -89,18 +90,18 @@ export struct SettingsMenu {
     })
   }
 
-  getIconBgColor(color: string): string {
+  getIconBgColor(color: ResourceColor): ResourceColor {
     switch (color) {
-      case '#42A5F5':
-        return '#E3F2FD'
-      case '#AB47BC':
-        return '#F3E5F5'
-      case '#66BB6A':
-        return '#E8F5E9'
-      case '#EF5350':
-        return '#FFEBEE'
+      case AISkinColor.accent:
+        return AISkinColor.selected
+      case AISkinColor.accent:
+        return AISkinColor.muted
+      case AISkinColor.success:
+        return AISkinColor.successSurface
+      case AISkinColor.danger:
+        return AISkinColor.dangerSurface
       default:
-        return '#f3f4f6'
+        return AISkinColor.muted
     }
   }
 }
@@ -111,9 +112,8 @@ interface SettingItem {
   title: string
   description: string
   icon: string
-  color: string
+  color: ResourceColor
 }
-
 
 
 

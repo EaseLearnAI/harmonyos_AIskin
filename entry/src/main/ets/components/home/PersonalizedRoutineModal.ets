@@ -1,3 +1,5 @@
+import { ProcessingPanel } from '../common/ProcessingPanel'
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 import { PersonalizedRoutinePreview } from './PersonalizedRoutinePreview'
 import { PlanApiService, PlanData, CreatePlanRequest, PlanStep } from '../plan/PlanApiService'
 import { SkinAnalysisApiService } from '../../services/SkinAnalysisApiService'
@@ -33,26 +35,23 @@ export struct PersonalizedRoutineModal {
         // Modal Header
         Row() {
           Row() {
-            Text('✨')
-              .fontSize(18)
-              .margin({ right: 8 })
             Text('个性化护肤方案')
               .fontSize(20)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#333333')
+              .fontColor(AISkinColor.text)
           }
           .layoutWeight(1)
 
           Button() {
             Text('×')
               .fontSize(24)
-              .fontColor('#6B7280')
+              .fontColor(AISkinColor.secondary)
           }
           .type(ButtonType.Normal)
-          .width(36)
-          .height(36)
+          .width(44)
+          .height(44)
           .borderRadius(18)
-          .backgroundColor('#F5F5F5')
+          .backgroundColor(AISkinColor.muted)
           .onClick(() => {
             if (this.onClose) {
               this.onClose()
@@ -64,12 +63,12 @@ export struct PersonalizedRoutineModal {
         .padding({ bottom: 16 })
         .border({
           width: { bottom: 1 },
-          color: '#E5E7EB',
+          color: AISkinColor.divider,
           style: BorderStyle.Solid
         })
 
         if (this.loadingPlan) {
-          this.LoadingState()
+          ProcessingPanel({ title: '个性化护肤方案', message: '正在整理早晚护理安排' })
         } else if (this.planError) {
           this.ErrorState()
         } else if (!this.generatedPlan) {
@@ -81,8 +80,6 @@ export struct PersonalizedRoutineModal {
               onSaveRoutine: () => {
                 if (this.generatedPlan && this.onSaveRoutine) {
                   console.log('===== 💾 保存方案到我的方案 =====')
-                  console.log('📋 方案ID:', this.generatedPlan._id || this.generatedPlan.id)
-                  console.log('📋 方案名称:', this.generatedPlan.name)
                   
                   // 传递完整的 PlanData，包含 planId
                   const planSaveData: PlanSaveData = {
@@ -106,18 +103,11 @@ export struct PersonalizedRoutineModal {
       .width('90%')
       .height('75%')
       .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-      .backgroundColor(Color.White)
-      .borderRadius(20)
-      .shadow({
-        radius: 20,
-        color: 'rgba(0, 0, 0, 0.15)',
-        offsetX: 0,
-        offsetY: 10
-      })
+      .attributeModifier(new CardStyle()).backgroundColor(AISkinColor.dialog).onClick(() => {})
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('rgba(0, 0, 0, 0.5)')
+    .backgroundColor(AISkinColor.scrim)
     .onClick(() => {
       if (this.onClose) {
         this.onClose()
@@ -131,12 +121,12 @@ export struct PersonalizedRoutineModal {
       LoadingProgress()
         .width(48)
         .height(48)
-        .color('#F8BBD0')
+        .color(AISkinColor.accent)
         .margin({ bottom: 16 })
 
       Text('AI正在为您定制专属护肤方案...')
         .fontSize(14)
-        .fontColor('#666666')
+        .fontColor(AISkinColor.secondary)
     }
     .width('100%')
     .height(200)
@@ -148,9 +138,9 @@ export struct PersonalizedRoutineModal {
     Column() {
       Text(this.planError || '获取失败')
         .fontSize(14)
-        .fontColor('#d32f2f')
+        .fontColor(AISkinColor.danger)
         .padding(16)
-        .backgroundColor('#FFEBEE')
+        .backgroundColor(AISkinColor.dangerSurface)
         .borderRadius(12)
     }
     .width('100%')
@@ -162,7 +152,7 @@ export struct PersonalizedRoutineModal {
       Column() {
         Text('请告诉我您的护肤需求，AI将结合您的个人信息和最新肌肤状态为您定制个性化护肤方案。')
           .fontSize(15)
-          .fontColor('#666666')
+          .fontColor(AISkinColor.secondary)
           .lineHeight(22)
           .margin({ bottom: 12 })
 
@@ -171,19 +161,21 @@ export struct PersonalizedRoutineModal {
           Text('年龄')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 12 })
             .alignSelf(ItemAlign.Start)
 
           TextInput({ placeholder: '请输入您的年龄', text: this.userAge })
+            .fontColor(AISkinColor.text)
+            .placeholderColor(AISkinColor.secondary)
             .width('100%')
             .height(44)
             .borderRadius(10)
-            .backgroundColor('#F5F5F5')
+            .backgroundColor(AISkinColor.muted)
             .padding({ left: 16, right: 16 })
             .type(InputType.Number)
             .fontSize(15)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .onChange((value: string) => {
               this.userAge = value
             })
@@ -197,7 +189,7 @@ export struct PersonalizedRoutineModal {
           Text('护肤需求')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 12 })
             .alignSelf(ItemAlign.Start)
 
@@ -205,11 +197,11 @@ export struct PersonalizedRoutineModal {
             ForEach(this.skinConcerns, (concern: ConcernOption) => {
               Button(concern.label)
                 .fontSize(14)
-                .fontColor(this.selectedConcerns.includes(concern.value) ? '#F8BBD0' : '#6c757d')
-                .backgroundColor(this.selectedConcerns.includes(concern.value) ? '#FFF0F5' : '#F8F9FA')
+                .fontColor(this.selectedConcerns.includes(concern.value) ? AISkinColor.accent : AISkinColor.secondary)
+                .backgroundColor(this.selectedConcerns.includes(concern.value) ? AISkinColor.selected : AISkinColor.muted)
                 .border({
                   width: 1,
-                  color: this.selectedConcerns.includes(concern.value) ? '#F8BBD0' : '#E9ECEF',
+                  color: this.selectedConcerns.includes(concern.value) ? AISkinColor.accent : AISkinColor.divider,
                   style: BorderStyle.Solid
                 })
                 .borderRadius(20)
@@ -231,7 +223,7 @@ export struct PersonalizedRoutineModal {
           Text('其他需求（可选）')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 12 })
             .alignSelf(ItemAlign.Start)
 
@@ -239,11 +231,11 @@ export struct PersonalizedRoutineModal {
             .width('100%')
             .height(100)
             .borderRadius(10)
-            .backgroundColor('#F5F5F5')
+            .backgroundColor(AISkinColor.muted)
             .padding({ left: 16, right: 16, top: 12, bottom: 12 })
             .fontSize(15)
-            .fontColor('#333333')
-            .placeholderColor('#9e9e9e')
+            .fontColor(AISkinColor.text)
+            .placeholderColor(AISkinColor.secondary)
             .onChange((value: string) => {
               this.customRequirements = value
             })
@@ -253,11 +245,11 @@ export struct PersonalizedRoutineModal {
         .margin({ bottom: 12 })
 
         // Generate Button
-        Button('✨ 开始生成')
+        Button('开始生成')
           .width('100%')
           .height(48)
-          .backgroundColor(this.canGenerate() ? '#F8BBD0' : '#E0E0E0')
-          .fontColor(this.canGenerate() ? Color.White : '#999999')
+          .backgroundColor(this.canGenerate() ? AISkinColor.primary : AISkinColor.divider)
+          .fontColor(this.canGenerate() ? Color.White : AISkinColor.secondary)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .borderRadius(12)
@@ -296,7 +288,7 @@ export struct PersonalizedRoutineModal {
       // 步骤1: 准备请求数据
       console.log('📋 步骤1: 准备请求数据')
       const age = parseInt(this.userAge)
-      if (isNaN(age) || age <= 0) {
+      if (!Number.isInteger(Number(this.userAge)) || age <= 0 || age > 120) {
         throw new Error('请输入有效的年龄')
       }
 
@@ -306,12 +298,6 @@ export struct PersonalizedRoutineModal {
         customRequirements: this.customRequirements || undefined,
         age: age
       }
-
-      console.log('📊 请求参数:', {
-        年龄: age,
-        护肤关注点: this.selectedConcerns,
-        自定义需求: this.customRequirements || '无'
-      })
 
       // 步骤2: 调用API创建方案
       console.log('📡 步骤2: 调用API创建方案')
@@ -336,7 +322,7 @@ export struct PersonalizedRoutineModal {
         this.loadingPlan = false
       }
     } catch (error) {
-      console.error('❌ 生成方案异常:', JSON.stringify(error))
+      console.error('❌ 生成方案异常')
       const errorMessage = error instanceof Error ? error.message : '生成方案失败，请重试'
       this.planError = errorMessage
       this.loadingPlan = false
@@ -354,4 +340,3 @@ interface PlanSaveData {
   planId: string
   plan: PlanData
 }
-

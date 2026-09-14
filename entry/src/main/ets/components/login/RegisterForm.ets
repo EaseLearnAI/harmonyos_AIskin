@@ -1,3 +1,4 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 import { UserData } from '../../services/AuthService'
 
 @Component
@@ -38,12 +39,12 @@ export struct RegisterForm {
               .margin({ right: 8 })
             Text(this.errorMessage)
               .fontSize(14)
-              .fontColor('#b71c1c')
+              .fontColor(AISkinColor.danger)
               .flexGrow(1)
           }
           .width('100%')
           .padding(12)
-          .backgroundColor('#ffebee')
+          .backgroundColor(AISkinColor.dangerSurface)
           .borderRadius(8)
           .margin({ bottom: 16 })
         }
@@ -54,11 +55,11 @@ export struct RegisterForm {
           Text('👤')
             .fontSize(16)
             .margin({ right: 8 })
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
           Text('用户名')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
         }
         .width('100%')
         .margin({ bottom: 8 })
@@ -69,11 +70,13 @@ export struct RegisterForm {
           .height(44)
           .padding({ left: 12, right: 12 })
           .fontSize(14)
-          .backgroundColor('#fafafa')
+          .fontColor(AISkinColor.text)
+          .placeholderColor(AISkinColor.secondary)
+          .backgroundColor(AISkinColor.muted)
           .borderRadius(8)
           .border({
             width: this.validationErrors.name ? 1 : 0,
-            color: this.validationErrors.name ? '#f44336' : '#e0e0e0',
+            color: this.validationErrors.name ? AISkinColor.danger : AISkinColor.divider,
             style: BorderStyle.Solid
           })
           .onChange((value: string) => {
@@ -85,7 +88,7 @@ export struct RegisterForm {
         if (this.validationErrors.name) {
           Text(this.validationErrors.name)
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
             .margin({ top: 4 })
             .width('100%')
         }
@@ -99,11 +102,11 @@ export struct RegisterForm {
           Text('⚧️')
             .fontSize(16)
             .margin({ right: 8 })
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
           Text('性别')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
         }
         .width('100%')
         .margin({ bottom: 8 })
@@ -112,11 +115,11 @@ export struct RegisterForm {
           Button() {
             Text('👨 男生')
               .fontSize(14)
-              .fontColor(this.gender === 'male' ? Color.White : '#424242')
+              .fontColor(this.gender === 'male' ? Color.White : AISkinColor.text)
           }
           .width('48%')
           .height(44)
-          .backgroundColor(this.gender === 'male' ? '#F8BBD0' : '#fafafa')
+          .backgroundColor(this.gender === 'male' ? AISkinColor.primary : AISkinColor.muted)
           .borderRadius(8)
           .onClick(() => {
             this.gender = 'male'
@@ -126,11 +129,11 @@ export struct RegisterForm {
           Button() {
             Text('👩 女生')
               .fontSize(14)
-              .fontColor(this.gender === 'female' ? Color.White : '#424242')
+              .fontColor(this.gender === 'female' ? Color.White : AISkinColor.text)
           }
           .width('48%')
           .height(44)
-          .backgroundColor(this.gender === 'female' ? '#F8BBD0' : '#fafafa')
+          .backgroundColor(this.gender === 'female' ? AISkinColor.primary : AISkinColor.muted)
           .borderRadius(8)
           .onClick(() => {
             this.gender = 'female'
@@ -143,7 +146,7 @@ export struct RegisterForm {
         if (this.validationErrors.gender) {
           Text(this.validationErrors.gender)
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
             .margin({ top: 4 })
             .width('100%')
         }
@@ -157,11 +160,11 @@ export struct RegisterForm {
           Text('📱')
             .fontSize(16)
             .margin({ right: 8 })
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
           Text('手机号')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
         }
         .width('100%')
         .margin({ bottom: 8 })
@@ -172,11 +175,13 @@ export struct RegisterForm {
           .height(44)
           .padding({ left: 12, right: 12 })
           .fontSize(14)
-          .backgroundColor('#fafafa')
+          .fontColor(AISkinColor.text)
+          .placeholderColor(AISkinColor.secondary)
+          .backgroundColor(AISkinColor.muted)
           .borderRadius(8)
           .border({
             width: this.validationErrors.phone ? 1 : 0,
-            color: this.validationErrors.phone ? '#f44336' : '#e0e0e0',
+            color: this.validationErrors.phone ? AISkinColor.danger : AISkinColor.divider,
             style: BorderStyle.Solid
           })
           .onChange((value: string) => {
@@ -188,7 +193,7 @@ export struct RegisterForm {
         if (this.validationErrors.phone) {
           Text(this.validationErrors.phone)
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
             .margin({ top: 4 })
             .width('100%')
         }
@@ -202,27 +207,29 @@ export struct RegisterForm {
           Text('🔒')
             .fontSize(16)
             .margin({ right: 8 })
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
           Text('密码')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
         }
         .width('100%')
         .margin({ bottom: 8 })
 
         Stack({ alignContent: Alignment.TopEnd }) {
           TextInput({ placeholder: '请输入密码（至少6个字符）', text: this.password })
-            .type(this.showPassword ? InputType.Normal : InputType.Password)
+            .type(this.showPassword ? InputType.Normal : InputType.Password).showPasswordIcon(false)
             .width('100%')
             .height(44)
             .padding({ left: 12, right: 48 })
             .fontSize(14)
-            .backgroundColor('#fafafa')
+            .fontColor(AISkinColor.text)
+            .placeholderColor(AISkinColor.secondary)
+            .backgroundColor(AISkinColor.muted)
             .borderRadius(8)
             .border({
               width: this.validationErrors.password ? 1 : 0,
-              color: this.validationErrors.password ? '#f44336' : '#e0e0e0',
+              color: this.validationErrors.password ? AISkinColor.danger : AISkinColor.divider,
               style: BorderStyle.Solid
             })
             .onChange((value: string) => {
@@ -250,7 +257,7 @@ export struct RegisterForm {
         if (this.validationErrors.password) {
           Text(this.validationErrors.password)
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
             .margin({ top: 4 })
             .width('100%')
         }
@@ -264,27 +271,29 @@ export struct RegisterForm {
           Text('🔒')
             .fontSize(16)
             .margin({ right: 8 })
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
           Text('确认密码')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#424242')
+            .fontColor(AISkinColor.text)
         }
         .width('100%')
         .margin({ bottom: 8 })
 
         Stack({ alignContent: Alignment.TopEnd }) {
           TextInput({ placeholder: '请再次输入密码', text: this.confirmPassword })
-            .type(this.showConfirmPassword ? InputType.Normal : InputType.Password)
+            .type(this.showConfirmPassword ? InputType.Normal : InputType.Password).showPasswordIcon(false)
             .width('100%')
             .height(44)
             .padding({ left: 12, right: 48 })
             .fontSize(14)
-            .backgroundColor('#fafafa')
+            .fontColor(AISkinColor.text)
+            .placeholderColor(AISkinColor.secondary)
+            .backgroundColor(AISkinColor.muted)
             .borderRadius(8)
             .border({
               width: this.validationErrors.confirmPassword ? 1 : 0,
-              color: this.validationErrors.confirmPassword ? '#f44336' : '#e0e0e0',
+              color: this.validationErrors.confirmPassword ? AISkinColor.danger : AISkinColor.divider,
               style: BorderStyle.Solid
             })
             .onChange((value: string) => {
@@ -312,7 +321,7 @@ export struct RegisterForm {
         if (this.validationErrors.confirmPassword) {
           Text(this.validationErrors.confirmPassword)
             .fontSize(12)
-            .fontColor('#f44336')
+            .fontColor(AISkinColor.danger)
             .margin({ top: 4 })
             .width('100%')
         }
@@ -324,7 +333,7 @@ export struct RegisterForm {
       Row() {
         Checkbox()
           .select(this.agreeTerms)
-          .selectedColor('#F8BBD0')
+          .selectedColor(AISkinColor.accent)
           .onChange((checked: boolean) => {
             this.agreeTerms = checked
             this.validationErrors.agreeTerms = ''
@@ -334,11 +343,11 @@ export struct RegisterForm {
           Row() {
             Text('我已阅读并同意')
               .fontSize(14)
-              .fontColor('#424242')
+              .fontColor(AISkinColor.text)
             Text('使用条款')
               .fontSize(14)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#F8BBD0')
+              .fontColor(AISkinColor.accent)
               .onClick(() => {
                 if (this.onShowTerms) {
                   this.onShowTerms()
@@ -348,11 +357,11 @@ export struct RegisterForm {
           Row() {
             Text('和')
               .fontSize(14)
-              .fontColor('#424242')
+              .fontColor(AISkinColor.text)
             Text('隐私政策')
               .fontSize(14)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#F8BBD0')
+              .fontColor(AISkinColor.accent)
               .onClick(() => {
                 if (this.onShowPrivacy) {
                   this.onShowPrivacy()
@@ -370,7 +379,7 @@ export struct RegisterForm {
       if (this.validationErrors.agreeTerms) {
         Text(this.validationErrors.agreeTerms)
           .fontSize(12)
-          .fontColor('#f44336')
+          .fontColor(AISkinColor.danger)
           .margin({ bottom: 8 })
           .width('100%')
       }
@@ -391,7 +400,7 @@ export struct RegisterForm {
       }
       .width('100%')
       .height(44)
-      .backgroundColor('#F8BBD0')
+      .backgroundColor(AISkinColor.primary)
       .borderRadius(8)
       .enabled(!this.loading)
       .opacity(this.loading ? 0.7 : 1)
@@ -403,11 +412,11 @@ export struct RegisterForm {
       Row() {
         Text('已有账号？')
           .fontSize(14)
-          .fontColor('#666666')
+          .fontColor(AISkinColor.secondary)
         Text('立即登录')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#F8BBD0')
+          .fontColor(AISkinColor.accent)
           .margin({ left: 4 })
           .onClick(() => {
             if (this.onNavigateToLogin) {
@@ -421,14 +430,7 @@ export struct RegisterForm {
       }
       .width('100%')
       .padding(24)
-      .backgroundColor(Color.White)
-      .borderRadius(16)
-      .shadow({
-        radius: 20,
-        color: 'rgba(255, 182, 193, 0.15)',
-        offsetX: 0,
-        offsetY: 8
-      })
+      .attributeModifier(new CardStyle())
     }
   }
 
@@ -533,7 +535,7 @@ export struct RegisterForm {
         }
       }
       this.errorMessage = errorMsg
-      console.error('注册错误:', JSON.stringify(err))
+      console.error('注册错误')
     } finally {
       this.loading = false
     }
@@ -549,4 +551,3 @@ interface ValidationErrors {
   gender?: string
   agreeTerms?: string
 }
-

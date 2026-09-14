@@ -46,7 +46,21 @@ export interface Routines {
 /**
  * 推荐数据接口
  */
+export interface ConflictAdvice {
+  productIds: string[]
+  title: string
+  detail: string
+}
+export interface ConflictProductPair {
+  productIds: string[]
+  status: string
+  explanation: string
+}
+export interface ConflictListData { conflicts: ConflictAnalysisData[] }
+export interface ConflictDetailData { conflict: ConflictAnalysisData }
+
 export interface RecommendationData {
+  advice?: ConflictAdvice[]
   productPairings?: ProductPairings
   routines?: Routines
 }
@@ -55,6 +69,7 @@ export interface RecommendationData {
  * 产品信息接口
  */
 export interface ConflictProductInfo {
+  _id?: string
   id?: string
   name?: string
   description?: string
@@ -65,6 +80,12 @@ export interface ConflictProductInfo {
  * 冲突分析响应数据
  */
 export interface ConflictAnalysisData {
+  _id?: string
+  createdAt?: string
+  reportVersion?: number
+  riskScore?: number
+  summary?: string
+  productPairs?: ConflictProductPair[]
   conflictId?: string
   conflicts?: ConflictItem[]
   safeCombo?: SafeComboItem[]
@@ -114,14 +135,12 @@ export class ConflictApiService {
    */
   private getAuthHeaders(): Record<string, string> {
     const token = this.authService.getToken()
-    console.log(`🔑 获取Token: ${token ? '已找到' : '未找到'}`)
     if (!token) {
       console.warn('⚠️ Token为空，请求将不带认证头')
       return {}
     }
     const headers: Record<string, string> = {} as Record<string, string>
     headers['Authorization'] = `Bearer ${token}`
-    console.log(`📦 认证头: Authorization: Bearer ${token.substring(0, 20)}...`)
     return headers
   }
 
@@ -130,10 +149,6 @@ export class ConflictApiService {
    */
   async analyzeConflict(productIds: string[]): Promise<ConflictApiResponse<ConflictAnalysisData>> {
     console.log('===== ⚠️ 开始冲突分析 =====')
-    console.log(`📊 分析产品:`)
-    for (let i = 0; i < productIds.length; i++) {
-      console.log(`   ${i + 1}. 产品ID: ${productIds[i]}`)
-    }
 
     const headers = this.getAuthHeaders()
     const body: AnalyzeConflictRequest = {
@@ -151,21 +166,7 @@ export class ConflictApiService {
     )
 
     if (response.success && response.data) {
-      const conflictData = response.data
       console.log(`✅ 冲突分析成功！`)
-      console.log(`📋 冲突记录ID: ${conflictData.conflictId || '未知'}`)
-      console.log(`📋 发现冲突数: ${conflictData.conflicts?.length || 0}`)
-      console.log(`📋 安全组合数: ${conflictData.safeCombo?.length || 0}`)
-
-      if (conflictData.conflicts && conflictData.conflicts.length > 0) {
-        console.log('⚠️ 检测到的冲突:')
-        for (let i = 0; i < conflictData.conflicts.length; i++) {
-          const conflict = conflictData.conflicts[i]
-          console.log(`🔴 ${i + 1}. ${conflict.components?.join(' + ') || '未知成分'} - ${conflict.severity || '未知'}风险`)
-          console.log(`  描述: ${conflict.description || '无'}`)
-        }
-      }
-
       return {
         success: true,
         data: response.data
@@ -182,12 +183,15 @@ export class ConflictApiService {
   /**
    * 获取冲突详情
    */
+  async getHistory(): Promise<ConflictApiResponse<ConflictListData>> {
+    return this.httpService.get<ConflictListData>('/conflicts', this.getAuthHeaders())
+  }
+
   async getConflictDetails(conflictId: string): Promise<ConflictApiResponse<ConflictAnalysisData>> {
     console.log('===== 🔍 获取冲突详情 =====')
-    console.log(`🆔 冲突ID: ${conflictId}`)
 
     const headers = this.getAuthHeaders()
-    const response = await this.httpService.get<ConflictAnalysisData>(
+    const response = await this.httpService.get<ConflictDetailData>(
       `/conflicts/${conflictId}`,
       headers
     )
@@ -196,7 +200,7 @@ export class ConflictApiService {
       console.log('✅ 获取冲突详情成功')
       return {
         success: true,
-        data: response.data
+        data: response.data.conflict
       }
     }
 
@@ -207,4 +211,3 @@ export class ConflictApiService {
     }
   }
 }
-

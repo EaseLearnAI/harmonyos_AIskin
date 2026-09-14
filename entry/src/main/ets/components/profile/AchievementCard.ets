@@ -1,3 +1,4 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 @Component
 export struct AchievementCard {
   @Prop achievements: AchievementItem[] = []
@@ -15,13 +16,13 @@ export struct AchievementCard {
           Text('我的成就')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#1f2937')
+            .fontColor(AISkinColor.text)
         }
         .layoutWeight(1)
 
         Text(`${this.unlockedCount}/${this.totalCount} 已解锁`)
           .fontSize(11)
-          .fontColor('#6b7280')
+          .fontColor(AISkinColor.secondary)
       }
       .width('100%')
       .margin({ bottom: 16 })
@@ -43,14 +44,7 @@ export struct AchievementCard {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
-    .borderRadius(16)
-    .shadow({
-      radius: 8,
-      color: 'rgba(0, 0, 0, 0.08)',
-      offsetX: 0,
-      offsetY: 2
-    })
+    .attributeModifier(new CardStyle())
   }
 
   @Builder
@@ -64,7 +58,7 @@ export struct AchievementCard {
       .width(48)
       .height(48)
       .borderRadius(12)
-      .backgroundColor(achievement.unlocked ? this.getIconBgColor(achievement.color) : '#f3f4f6')
+      .backgroundColor(achievement.unlocked ? this.getIconBgColor(achievement.color) : AISkinColor.muted)
       .justifyContent(FlexAlign.Center)
       .margin({ bottom: 12 })
 
@@ -72,7 +66,7 @@ export struct AchievementCard {
       Text(achievement.title)
         .fontSize(13)
         .fontWeight(FontWeight.Medium)
-        .fontColor(achievement.unlocked ? '#1f2937' : '#9ca3af')
+        .fontColor(achievement.unlocked ? AISkinColor.text : AISkinColor.secondary)
         .margin({ bottom: 4 })
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -80,7 +74,7 @@ export struct AchievementCard {
       // Description
       Text(achievement.description)
         .fontSize(10)
-        .fontColor(achievement.unlocked ? '#6b7280' : '#d1d5db')
+        .fontColor(achievement.unlocked ? AISkinColor.secondary : AISkinColor.secondary)
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .margin({ bottom: 8 })
@@ -90,7 +84,7 @@ export struct AchievementCard {
         Row() {
           Text('已获得')
             .fontSize(9)
-            .fontColor('#F8BBD0')
+            .fontColor(AISkinColor.accent)
             .layoutWeight(1)
 
           if (achievement.expReward && achievement.expReward > 0) {
@@ -100,7 +94,7 @@ export struct AchievementCard {
                 .margin({ right: 2 })
               Text(`+${achievement.expReward}经验`)
                 .fontSize(9)
-                .fontColor('#FFD700')
+                .fontColor('#8A6D00')
             }
           }
         }
@@ -108,33 +102,33 @@ export struct AchievementCard {
       } else {
         Text(`进度: ${achievement.progress || 0}/${achievement.target || 0}`)
           .fontSize(9)
-          .fontColor('#9ca3af')
+          .fontColor(AISkinColor.secondary)
           .width('100%')
       }
     }
     .width('100%')
     .height('100%')
     .padding(12)
-    .backgroundColor(achievement.unlocked ? '#ffffff' : '#fafafa')
+    .backgroundColor(achievement.unlocked ? AISkinColor.white : AISkinColor.muted)
     .borderRadius(12)
     .border({
       width: 1,
-      color: achievement.unlocked ? '#f3f4f6' : '#e5e7eb',
+      color: achievement.unlocked ? AISkinColor.muted : AISkinColor.divider,
       style: BorderStyle.Solid
     })
     .opacity(achievement.unlocked ? 1 : 0.6)
   }
 
-  getIconBgColor(color: string): string {
+  getIconBgColor(color: ResourceColor): ResourceColor {
     switch (color) {
       case 'sakura':
         return '#FFF9FB'
       case 'blue':
-        return '#E3F2FD'
+        return AISkinColor.selected
       case 'gold':
-        return '#FFF9E6'
+        return AISkinColor.muted
       default:
-        return '#f3f4f6'
+        return AISkinColor.muted
     }
   }
 }
@@ -145,13 +139,12 @@ export interface AchievementItem {
   title: string
   description: string
   icon: string
-  color: string
+  color: ResourceColor
   unlocked: boolean
   progress?: number
   target?: number
   expReward?: number
 }
-
 
 
 

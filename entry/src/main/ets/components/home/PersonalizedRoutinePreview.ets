@@ -1,3 +1,5 @@
+import { AIContentNotice } from '../common/AIContentNotice'
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 import { PlanData, PlanStep } from '../plan/PlanApiService'
 
 @Component
@@ -11,21 +13,23 @@ export struct PersonalizedRoutinePreview {
       Column() {
         // Preview Header
         Column() {
+          AIContentNotice({ scene: '护肤方案' })
+
           Text(this.plan.name || '个性化护肤方案')
             .fontSize(20)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
+            .fontColor(AISkinColor.text)
             .margin({ bottom: 8 })
 
           Text(this.plan.requirement || '日常基础护肤')
             .fontSize(14)
-            .fontColor('#666666')
+            .fontColor(AISkinColor.secondary)
         }
         .width('100%')
         .padding({ bottom: 16 })
         .border({
           width: { bottom: 1 },
-          color: '#F0F0F0',
+          color: AISkinColor.muted,
           style: BorderStyle.Solid
         })
 
@@ -50,10 +54,10 @@ export struct PersonalizedRoutinePreview {
 
         // Actions
         Row() {
-          Button('保存到我的方案')
+          Button('使用此方案')
             .layoutWeight(1)
             .height(44)
-            .backgroundColor('#F8BBD0')
+            .backgroundColor(AISkinColor.primary)
             .fontColor(Color.White)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
@@ -67,8 +71,8 @@ export struct PersonalizedRoutinePreview {
           Button('重新定制')
             .layoutWeight(1)
             .height(44)
-            .backgroundColor('#F5F5F5')
-            .fontColor('#666666')
+            .backgroundColor(AISkinColor.muted)
+            .fontColor(AISkinColor.secondary)
             .fontSize(15)
             .fontWeight(FontWeight.Medium)
             .borderRadius(10)
@@ -84,15 +88,14 @@ export struct PersonalizedRoutinePreview {
         .padding({ top: 24 })
         .border({
           width: { top: 1 },
-          color: '#F0F0F0',
+          color: AISkinColor.muted,
           style: BorderStyle.Solid
         })
       }
       .width('100%')
       .height('100%')
       .padding(24)
-      .backgroundColor(Color.White)
-      .borderRadius(20)
+      .attributeModifier(new CardStyle())
     }
   }
 
@@ -103,7 +106,7 @@ export struct PersonalizedRoutinePreview {
         Text(title)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#444444')
+          .fontColor(AISkinColor.text)
       }
       .width('100%')
       .margin({ bottom: 12 })
@@ -120,12 +123,12 @@ export struct PersonalizedRoutinePreview {
                 .fontColor(Color.White)
                 .textAlign(TextAlign.Center)
                 .borderRadius(12)
-                .backgroundColor('#F8BBD0')
+                .backgroundColor(AISkinColor.primary)
                 .margin({ right: 12 })
 
               Text(step.product || '')
                 .fontSize(15)
-                .fontColor('#333333')
+                .fontColor(AISkinColor.text)
                 .layoutWeight(1)
             }
             .width('100%')
@@ -133,14 +136,14 @@ export struct PersonalizedRoutinePreview {
             if (step.reason) {
               Text(step.reason)
                 .fontSize(12)
-                .fontColor('#666666')
+                .fontColor(AISkinColor.secondary)
                 .margin({ top: 4, left: 36 })
                 .width('100%')
             }
           }
           .width('100%')
           .padding(12)
-          .backgroundColor('#F9FAFB')
+          .backgroundColor(AISkinColor.muted)
           .borderRadius(12)
           .margin({ bottom: 8 })
         })
@@ -155,10 +158,10 @@ export struct PersonalizedRoutinePreview {
   RecommendationsSection(recommendations: string[]) {
     Column() {
       Row() {
-        Text('专业建议')
+        Text('AI生成建议')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#444444')
+          .fontColor(AISkinColor.text)
       }
       .width('100%')
       .margin({ bottom: 12 })
@@ -168,12 +171,12 @@ export struct PersonalizedRoutinePreview {
           Row() {
             Text('✓')
               .fontSize(16)
-              .fontColor('#F8BBD0')
+              .fontColor(AISkinColor.accent)
               .margin({ right: 10 })
 
             Text(tip)
               .fontSize(14)
-              .fontColor('#555555')
+              .fontColor(AISkinColor.secondary)
               .layoutWeight(1)
           }
           .width('100%')
@@ -186,5 +189,4 @@ export struct PersonalizedRoutinePreview {
     .width('100%')
   }
 }
-
 

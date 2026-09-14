@@ -1,4 +1,5 @@
 import http from '@ohos.net.http'
+import { rcp } from '@kit.RemoteCommunicationKit'
 import { ApiConfig } from './ApiConfig'
 
 /**
@@ -81,11 +82,9 @@ interface ErrorWithMessage {
 export class HttpService {
   private static instance: HttpService | null = null
   private defaultTimeout: number = 30000 // 30秒超时
-  private httpRequest: http.HttpRequest
 
   private constructor() {
     // Private constructor for singleton
-    this.httpRequest = http.createHttp()
   }
 
   static getInstance(): HttpService {
@@ -98,25 +97,17 @@ export class HttpService {
   /**
    * 打印请求信息（用于调试）
    */
-  private logRequest(url: string, options: HttpRequestOptions): void {
+  private logRequest(_url: string, options: HttpRequestOptions): void {
     console.log('===== 📡 HTTP 请求 =====')
-    console.log(`🔗 URL: ${url}`)
     console.log(`📋 Method: ${options.method || 'GET'}`)
-    if (options.headers) {
-      console.log(`📦 Headers: ${JSON.stringify(options.headers)}`)
-    }
-    if (options.body) {
-      console.log(`📤 Request Body: ${JSON.stringify(options.body)}`)
-    }
   }
 
   /**
    * 打印响应信息（用于调试）
    */
-  private logResponse(url: string, statusCode: number, responseData: HttpResponseData): void {
+  private logResponse(_url: string, statusCode: number, _responseData: HttpResponseData): void {
     console.log('✅ 收到响应')
     console.log(`📊 Status Code: ${statusCode}`)
-    console.log(`📦 Response Body: ${JSON.stringify(responseData)}`)
   }
 
   /**
@@ -177,6 +168,22 @@ export class HttpService {
    * @param options 请求选项
    * @returns Promise<HttpResponse<T>>
    */
+  private async requestPatch<T>(url: string, headers: Record<string, string>, body: string): Promise<HttpResponse<T>> {
+    // NetworkKit's RequestMethod has no PATCH in SDK 20. RCP supports the real method.
+    let session: rcp.Session | undefined = undefined
+    try {
+      session = rcp.createSession()
+      const response = await session.fetch(new rcp.Request(url, 'PATCH', headers, body))
+      const payload = response.toJSON() as HttpResponse<T> | null
+      if (response.statusCode < 200 || response.statusCode >= 300 || !payload?.success) {
+        return { success: false, message: payload?.message || `HTTP ${response.statusCode}` } as HttpResponse<T>
+      }
+      return payload
+    } catch (error) {
+      return { success: false, message: '网络请求失败，请检查连接后重试' } as HttpResponse<T>
+    } finally { session?.close() }
+  }
+
   async request<T = Record<string, string>>(endpoint: string, options: HttpRequestOptions = {}): Promise<HttpResponse<T>> {
     const url = ApiConfig.getApiUrl(endpoint)
     const method = options.method || 'GET'
@@ -204,13 +211,16 @@ export class HttpService {
     }
     this.logRequest(url, logOptions)
 
+    if (method === 'PATCH') return this.requestPatch<T>(url, headers, body || '{}')
+
+    const request = http.createHttp()
     try {
       // 构建http请求选项
       const httpRequestOptions: http.HttpRequestOptions = {
         method: http.RequestMethod[method],
         header: headers,
         connectTimeout: options.timeout || this.defaultTimeout,
-        readTimeout: options.timeout || this.defaultTimeout
+        readTimeout: options.timeout || ((endpoint.includes('analy') || endpoint.includes('extract-ingredients') || (endpoint === '/plans' || endpoint === '/conflicts') && options.method === 'POST') ? 120000 : this.defaultTimeout)
       }
 
       // 如果有请求体，添加到选项中
@@ -219,7 +229,7 @@ export class HttpService {
       }
 
       // 发送HTTP请求
-      const response = await this.httpRequest.request(url, httpRequestOptions)
+      const response = await request.request(url, httpRequestOptions)
 
       // 解析响应
       let responseData: HttpResponseData = {}
@@ -272,7 +282,7 @@ export class HttpService {
         } as HttpResponse<T>
       }
     } catch (error) {
-      console.error('❌ HTTP请求错误:', JSON.stringify(error))
+      console.error('❌ HTTP请求错误')
       
       // 处理不同类型的错误
       const errorObj = error as ErrorWithMessage | string | null | undefined
@@ -283,6 +293,8 @@ export class HttpService {
         message: errorMessage,
         error: String(error)
       } as HttpResponse<T>
+    } finally {
+      request.destroy()
     }
   }
 
@@ -350,6 +362,6 @@ export class HttpService {
    * 销毁HTTP请求实例
    */
   destroy(): void {
-    this.httpRequest.destroy()
+    // Requests release their own handles in finally.
   }
 }
