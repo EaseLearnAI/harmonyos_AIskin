@@ -1,5 +1,9 @@
+import { AISkinLayout, AISkinRadius, AISkinSpacing, AISkinTextRole, AISkinTone, AISkinTypography, AISkinCardRole, AISkinCardState, AISkinCardInset, AISkinMotion } from './Foundation/AISkinTokens'
 // Values verified against ios_aiskin @ 9f69aa9 / AISkinColor.swift.
 export class AISkinColor {
+  static readonly floatingShadow: ResourceColor = $r('app.color.aiskin_floating_shadow')
+  static readonly featureSurface: ResourceColor = $r('app.color.aiskin_featureSurface')
+  static readonly routineSurface: ResourceColor = $r('app.color.aiskin_routineSurface')
   static readonly dialog: ResourceColor = $r('app.color.aiskin_dialog')
   static readonly accent: ResourceColor = $r('app.color.aiskin_accent')
   static readonly primary: ResourceColor = $r('app.color.aiskin_primary')
@@ -29,33 +33,42 @@ export class AISkinColor {
   static readonly successSurface: ResourceColor = $r('app.color.aiskin_successSurface')
 }
 
-export class AISkinLayout {
-  static readonly edge: number = 24
-  static readonly gap: number = 12
-  static readonly radius: number = 24
-  static readonly controlRadius: number = 16
-  static readonly tap: number = 48
-  static readonly maxWidth: number = 600
-}
+export { AISkinLayout } from './Foundation/AISkinTokens'
 
+export function toneColor(tone: AISkinTone): ResourceColor {
+  switch (tone) {
+    case AISkinTone.Secondary: return AISkinColor.secondary
+    case AISkinTone.Accent: return AISkinColor.accent
+    case AISkinTone.Success: return AISkinColor.success
+    case AISkinTone.Warning: return AISkinColor.warning
+    case AISkinTone.Destructive: return AISkinColor.danger
+    case AISkinTone.OnAccent: return AISkinColor.white
+    default: return AISkinColor.text
+  }
+}
+export class TextStyle implements AttributeModifier<TextAttribute> {
+  private role: AISkinTextRole
+  private tone: AISkinTone
+  constructor(role: AISkinTextRole = AISkinTextRole.Body, tone: AISkinTone = AISkinTone.Primary) { this.role = role; this.tone = tone }
+  applyNormalAttribute(instance: TextAttribute): void {
+    instance.fontSize(AISkinTypography.size(this.role)).fontWeight(AISkinTypography.weight(this.role))
+      .fontColor(toneColor(this.tone))
+  }
+}
 export class CardStyle implements AttributeModifier<CommonAttribute> {
+  private role: AISkinCardRole
+  private state: AISkinCardState
+  private inset: AISkinCardInset
+  constructor(role: AISkinCardRole = AISkinCardRole.Content, state: AISkinCardState = AISkinCardState.Normal,
+    inset: AISkinCardInset = AISkinCardInset.None) { this.role = role; this.state = state; this.inset = inset }
   applyNormalAttribute(instance: CommonAttribute): void {
-    instance.backgroundColor(AISkinColor.surface)
-      .borderRadius(AISkinLayout.radius)
-      .border({ width: 1, color: AISkinColor.border })
-      .shadow({ radius: 12, color: AISkinColor.shadow, offsetY: 4 })
+    const radius = this.role === AISkinCardRole.Feature ? AISkinRadius.featureCard : this.role === AISkinCardRole.Routine ? AISkinRadius.routineCard : this.role === AISkinCardRole.Action ? AISkinRadius.actionCard : AISkinRadius.card
+    const surface = this.state === AISkinCardState.Selected ? AISkinColor.selected : this.role === AISkinCardRole.Feature ? AISkinColor.featureSurface : this.role === AISkinCardRole.Routine ? AISkinColor.routineSurface : this.role === AISkinCardRole.Overlay ? AISkinColor.dialog : AISkinColor.surface
+    instance.backgroundColor(surface).borderRadius(radius).borderWidth(AISkinLayout.hairline)
+      .borderColor(this.state === AISkinCardState.Selected ? AISkinColor.accent : AISkinColor.border)
+    if (this.inset === AISkinCardInset.Regular) instance.padding(AISkinSpacing.cardPadding)
   }
 }
-
-export class PrimaryButtonStyle implements AttributeModifier<ButtonAttribute> {
-  applyNormalAttribute(instance: ButtonAttribute): void {
-    instance.height(AISkinLayout.tap).borderRadius(AISkinLayout.controlRadius)
-      .backgroundColor(AISkinColor.primary).fontColor(AISkinColor.white).fontSize(16)
-  }
-  applyPressedAttribute(instance: ButtonAttribute): void { instance.opacity(0.78) }
-  applyDisabledAttribute(instance: ButtonAttribute): void { instance.opacity(0.45) }
-}
-
 @Component
 export struct AISkinBackground {
   @State screenWidth: number = 400

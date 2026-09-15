@@ -1,4 +1,5 @@
-import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
+import { AISkinLayout, AISkinSpacing, AISkinTextRole, AISkinTone, AISkinCardRole, AISkinMotion } from '../../design/Foundation/AISkinTokens'
+import { AISkinColor, CardStyle, TextStyle } from '../../design/AISkinTheme'
 // Same presentation estimate as iOS AISkinProcessingEstimate. Never completes a request.
 @Component
 export struct ProcessingPanel {
@@ -11,22 +12,22 @@ export struct ProcessingPanel {
     this.timer = setInterval(() => {
       const seconds = (Date.now() - started) / 1000
       this.percentage = Math.min(98, Math.max(0, Math.round(98 - 78 * Math.exp(-seconds / 2.2) - 20 * Math.exp(-seconds / 16))))
-    }, 200)
+    }, AISkinMotion.processingInterval)
   }
   aboutToDisappear() { if (this.timer !== -1) clearInterval(this.timer) }
   build() {
-    Column({ space: 24 }) {
+    Column({ space: AISkinSpacing.xLarge }) {
       Stack() {
-        Progress({ value: this.percentage, total: 100, type: ProgressType.Ring }).width(83).height(83).color(AISkinColor.accent).backgroundColor(AISkinColor.selected).style({ strokeWidth: 3 })
-        Column({ space: 4 }) {
-          Text(`${this.percentage}%`).fontSize(22).fontWeight(FontWeight.Medium).fontColor(AISkinColor.accent)
-          Text('预估').fontSize(12).fontColor(AISkinColor.secondary)
+        Progress({ value: this.percentage, total: 100, type: ProgressType.Ring }).width(AISkinLayout.processingRing).height(AISkinLayout.processingRing).color(AISkinColor.accent).backgroundColor(AISkinColor.selected).style({ strokeWidth: AISkinLayout.progressStroke })
+        Column({ space: AISkinSpacing.xxSmall }) {
+          Text(`${this.percentage}%`).attributeModifier(new TextStyle(AISkinTextRole.ProcessingPercentage,AISkinTone.Accent))
+          Text('预估').attributeModifier(new TextStyle(AISkinTextRole.Caption,AISkinTone.Secondary))
         }
       }.accessibilityText(`预估进度 ${this.percentage}%`)
-      Column({ space: 8 }) {
-        Text(this.title).fontSize(20).fontWeight(FontWeight.Medium).fontColor(AISkinColor.text).textAlign(TextAlign.Center)
-        Text(this.message).fontSize(12).lineHeight(20).fontColor(AISkinColor.secondary).textAlign(TextAlign.Center)
+      Column({ space: AISkinSpacing.xSmall }) {
+        Text(this.title).attributeModifier(new TextStyle(AISkinTextRole.ProcessingTitle)).textAlign(TextAlign.Center)
+        Text(this.message).attributeModifier(new TextStyle(AISkinTextRole.Caption,AISkinTone.Secondary)).textAlign(TextAlign.Center)
       }
-    }.width('90%').constraintSize({ maxWidth: 330 }).padding(32).attributeModifier(new CardStyle()).backgroundColor(AISkinColor.dialog)
+    }.width('90%').constraintSize({ maxWidth: AISkinLayout.processingPanelWidth }).padding(AISkinSpacing.xxLarge).attributeModifier(new CardStyle(AISkinCardRole.Overlay))
   }
 }

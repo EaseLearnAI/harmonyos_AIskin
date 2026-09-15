@@ -6,6 +6,7 @@ import { ApiConfig } from './ApiConfig'
  * HTTP响应接口
  */
 export interface HttpResponse<T = Record<string, string>> {
+  statusCode?: number
   success: boolean
   data?: T
   message?: string
@@ -176,8 +177,9 @@ export class HttpService {
       const response = await session.fetch(new rcp.Request(url, 'PATCH', headers, body))
       const payload = response.toJSON() as HttpResponse<T> | null
       if (response.statusCode < 200 || response.statusCode >= 300 || !payload?.success) {
-        return { success: false, message: payload?.message || `HTTP ${response.statusCode}` } as HttpResponse<T>
+        return { success: false, message: payload?.message || `HTTP ${response.statusCode}`, statusCode: response.statusCode } as HttpResponse<T>
       }
+      payload.statusCode = response.statusCode
       return payload
     } catch (error) {
       return { success: false, message: '网络请求失败，请检查连接后重试' } as HttpResponse<T>
@@ -262,6 +264,7 @@ export class HttpService {
         if (responseData.success !== undefined) {
           // 直接使用responseData.data，通过类型断言处理
           return {
+            statusCode: response.responseCode,
             success: responseData.success,
             data: responseData.data as T,
             message: responseData.message,
@@ -271,12 +274,14 @@ export class HttpService {
         // 如果响应格式是直接的数据
         return {
           success: true,
+          statusCode: response.responseCode,
           data: responseData.data as T
         } as HttpResponse<T>
       } else {
         // HTTP错误状态码
         return {
           success: false,
+          statusCode: response.responseCode,
           message: responseData.message || responseData.error || `HTTP ${response.responseCode}`,
           error: responseData.error
         } as HttpResponse<T>

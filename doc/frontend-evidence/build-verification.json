@@ -1,0 +1,14 @@
+{
+  "builtAt": "2026-09-15T03:13:39.550315+00:00",
+  "mode": "production / release",
+  "appDebug": false,
+  "sha256": "0591ac74479e75f15ff788e3447705df534042789b3e53547235cebb33174128",
+  "sizeBytes": 7876050,
+  "httpsApiPresent": true,
+  "localApiAbsent": true,
+  "fixtureCredentialsAbsent": true,
+  "componentPreviewDisabledInFreshBuildSource": true,
+  "loginFieldsBlankInFreshBuildSource": true,
+  "signed": false,
+  "includesCardThemeHotSwitchFix": true
+}

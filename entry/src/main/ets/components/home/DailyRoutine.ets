@@ -1,3 +1,6 @@
+import { AISkinButton, AISkinTabs, AISkinStateView } from '../../design/AISkinPrimitives'
+import { AISkinChecklistRow } from '../../design/AISkinJourneyComponents'
+import { AISkinTextRole, AISkinTone, AISkinSpacing, AISkinButtonVariant, AISkinButtonLayout, AISkinTabVariant, AISkinStateKind, AISkinCardRole, AISkinCardState, AISkinCardInset } from '../../design/Foundation/AISkinTokens'
 import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 import { AISkinIcon } from '../../design/AISkinIcon'
 import { PlanApiService, PlanData, PlanStep, DailyProgress } from '../plan/PlanApiService'
@@ -33,40 +36,24 @@ export struct DailyRoutine {
     this.saving = false
   }
   build() {
-    Column({ space: 16 }) {
+    Column({ space: AISkinSpacing.small }) {
       Row() {
-        Text('每日护肤').fontSize(18).fontWeight(FontWeight.Medium).fontColor(AISkinColor.text).layoutWeight(1)
-        Text(this.progress ? `${this.progress.completedCount} / ${this.progress.totalCount}` : '—').fontSize(14).fontColor(AISkinColor.secondary)
-        Button() { AISkinIcon({ name: 'history' }) }.width(44).height(44).backgroundColor(AISkinColor.surface).margin({ left: 8 }).onClick(this.onHistory)
+        AISkinButton({ title: '每日护肤', textRole: AISkinTextRole.HomeHeading, tone: AISkinTone.Primary, variant: AISkinButtonVariant.Plain, layout: AISkinButtonLayout.Compact, onAction: this.onDetails })
+        Blank()
+        AISkinButton({ title: '历史', icon: 'history', textRole: AISkinTextRole.Caption, variant: AISkinButtonVariant.Plain, layout: AISkinButtonLayout.Compact, onAction: this.onHistory })
       }.width('100%')
-      Row({ space: 6 }) {
-        this.periodButton('早间','morning')
-        this.periodButton('晚间','evening')
-      }.width('100%').padding(4).backgroundColor(AISkinColor.selected).borderRadius(24)
-      if (this.error) { Text(this.error).fontSize(13).fontColor(AISkinColor.danger).lineHeight(20) }
-      ForEach((this.period === 'morning' ? this.plan.morning : this.plan.evening) || [], (step: PlanStep) => {
-        Button() {
-          Row({ space: 14 }) {
-            Text(this.completed(step.step || 0) ? '✓' : '○').fontSize(26).fontColor(AISkinColor.accent).width(28)
-            Column({ space: 6 }) {
-              Text(step.product || '护肤步骤').fontSize(16).fontWeight(FontWeight.Medium).fontColor(AISkinColor.text)
-              Text(step.reason || '').fontSize(13).lineHeight(21).fontColor(AISkinColor.secondary)
-            }.layoutWeight(1).alignItems(HorizontalAlign.Start)
-            Text(String(step.step || 0).padStart(2,'0')).fontSize(12).fontColor(AISkinColor.secondary)
-          }.width('100%').padding({ top: 12, bottom: 12 })
-        }.type(ButtonType.Normal).backgroundColor(Color.Transparent).width('100%').enabled(!this.saving && this.progress !== null)
-          .accessibilityText(`${step.product} ${this.completed(step.step || 0) ? '已完成' : '未完成'}`)
-          .onClick(() => { this.toggle(step.step || 0) })
+      AISkinTabs({ items: ['早间','晚间'], icons: ['sun','moon'], selection: this.period === 'morning' ? 0 : 1, variant: AISkinTabVariant.Segmented, onSelect: (index: number) => { this.period = index === 0 ? 'morning' : 'evening' } })
+      if (this.error) { AISkinStateView({ title: '保存未成功', message: this.error, kind: AISkinStateKind.Error, onRetry: () => { this.load() } }) }
+      Column() {
+      ForEach((this.period === 'morning' ? this.plan.morning : this.plan.evening) || [], (step: PlanStep, index: number) => {
+        AISkinChecklistRow({ title: step.product || '护肤步骤', message: step.reason || '', number: index + 1,
+          isCompleted: this.completed(step.step || 0), isEnabled: !this.saving && this.progress !== null, onAction: () => { this.toggle(step.step || 0) } })
+        if (index < (((this.period === 'morning' ? this.plan.morning : this.plan.evening) || []).length - 1)) { Divider().color(AISkinColor.divider) }
       })
-      Divider().color(AISkinColor.divider)
-      Button('查看完整护肤方案  →').width('100%').height(44).backgroundColor(Color.Transparent)
-        .fontColor(AISkinColor.accent).onClick(this.onDetails)
-    }.width('100%').padding(20).attributeModifier(new CardStyle())
-  }
-  @Builder
-  periodButton(title: string, value: string) {
-    Button(title).layoutWeight(1).height(40).fontColor(this.period === value ? AISkinColor.text : AISkinColor.secondary)
-      .backgroundColor(this.period === value ? AISkinColor.elevated : Color.Transparent).borderRadius(20)
-      .onClick(() => { this.period = value })
+      }.width('100%')
+      if (!((this.period === 'morning' ? this.plan.morning : this.plan.evening)?.length)) {
+        AISkinStateView({ title: '暂无护理步骤', message: '可以在完整护肤方案中查看安排。' })
+      }
+    }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Routine, AISkinCardState.Normal, AISkinCardInset.Regular))
   }
 }

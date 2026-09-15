@@ -1,3 +1,6 @@
+import { DesignSystemGallery } from '../design/DesignSystemGallery'
+import { AISkinStateView } from '../design/AISkinPrimitives'
+import { AISkinStateKind } from '../design/Foundation/AISkinTokens'
 import { AISkinColor } from '../design/AISkinTheme'
 import { AISkinBackground } from '../design/AISkinTheme'
 import { OnboardingView } from './OnboardingView'
@@ -17,14 +20,29 @@ import { ConflictAnalysisData } from '../components/product/ConflictApiService'
 @Entry
 @Component
 struct Index {
+  @StorageLink('aiskinSafeTopPx') safeTopPx: number = 0
+  @StorageLink('aiskinSafeBottomPx') safeBottomPx: number = 0
+  @StorageLink('aiskinSafeLeftPx') safeLeftPx: number = 0
+  @StorageLink('aiskinSafeRightPx') safeRightPx: number = 0
+  @StorageLink('aiskinComponentPreview') componentPreview: boolean = false
+  @State screenOverlay: boolean = false
+  @State openPlan: boolean = false
+  private homeBack: (() => boolean) | undefined = undefined
+  private skinBack: (() => boolean) | undefined = undefined
+  private productBack: (() => boolean) | undefined = undefined
+  private ingredientBack: (() => boolean) | undefined = undefined
+  private profileBack: (() => boolean) | undefined = undefined
   @State onboarding: boolean = true
   @State currentRoute: string = '/'
   @State ingredientProductId: string = ''
+  @State ingredientEdit: boolean = false
   @State showIngredientView: boolean = false
-  @State isAuthenticated: boolean = false
+  @StorageLink('aiskinAuthenticated') isAuthenticated: boolean = false
   @State showLoginView: boolean = false
   @State showRegisterView: boolean = false
   @State checkingAuth: boolean = true
+  @State authRestoreError: string = ''
+  private authCheckGeneration: number = 0
   @State productViewParams: ProductViewParams | null = null
   @State showConflictView: boolean = false
   @State conflictData: ConflictAnalysisData | null = null
@@ -35,9 +53,17 @@ struct Index {
     this.checkAuthStatus()
   }
 
-  checkAuthStatus(): void {
+  aboutToDisappear(): void { this.authCheckGeneration++ }
+
+  async checkAuthStatus(): Promise<void> {
+    const generation = ++this.authCheckGeneration
     this.checkingAuth = true
-    // Check authentication status
+    this.authRestoreError = ''
+    if (!this.componentPreview) {
+      const response = await this.authService.restoreSession()
+      if (generation !== this.authCheckGeneration) return
+      if (response.retryRequired) this.authRestoreError = response.message || '安全登录信息读取失败，请重试'
+    }
     this.isAuthenticated = this.authService.isAuthenticated()
     this.showLoginView = !this.isAuthenticated
     this.showRegisterView = false
@@ -51,6 +77,8 @@ struct Index {
       this.ingredientProductId = ''
     }
     this.currentRoute = route
+    this.screenOverlay = false
+    this.openPlan = false
     if (params) {
       this.productViewParams = params
     } else {
@@ -58,7 +86,8 @@ struct Index {
     }
   }
 
-  handleNavigateToIngredient(productId: string): void {
+  handleNavigateToIngredient(productId: string, edit: boolean = false): void {
+    this.ingredientEdit = edit
     this.ingredientProductId = productId
     this.showIngredientView = true
   }
@@ -104,7 +133,8 @@ struct Index {
 
   handleLogout(): void {
     console.log('===== 🚪 处理退出登录 =====')
-    this.authService.logout()
+    // Profile calls this only after durable logout/deletion succeeds.
+    this.authCheckGeneration++
     this.isAuthenticated = false
     this.showLoginView = true
     this.showRegisterView = false
@@ -113,33 +143,26 @@ struct Index {
 
   onBackPress(): boolean {
     if (this.showConflictView) { this.handleBackFromConflict(); return true }
-    if (this.showIngredientView) { this.handleBackFromIngredient(); return true }
+    if (this.showIngredientView) { if (!this.ingredientBack?.()) this.handleBackFromIngredient(); return true }
     if (this.showRegisterView) { this.handleNavigateToLogin(); return true }
     if (!this.isAuthenticated && !this.onboarding) { this.onboarding = true; return true }
-    if (this.currentRoute !== '/') { this.currentRoute = '/'; return true }
+    if (this.currentRoute === '/' && this.homeBack?.()) return true
+    if ((this.currentRoute === '/skinstatus' || this.currentRoute === '/skin-history') && this.skinBack?.()) return true
+    if (this.currentRoute === '/product' && this.productBack?.()) return true
+    if (this.currentRoute === '/profile' && this.profileBack?.()) return true
+    if (this.currentRoute === '/skin-history' || this.currentRoute === '/conflict-history') { this.handleNavigate('/profile'); return true }
+    if (this.currentRoute !== '/') { this.handleNavigate('/'); return true }
     return false
   }
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
       AISkinBackground()
-      if (this.checkingAuth) {
-        // Show loading while checking auth
-        Column() {
-          LoadingProgress()
-            .width(40)
-            .height(40)
-            .color(AISkinColor.accent)
-            .margin({ bottom: 16 })
-
-          Text('检查登录状态...')
-            .fontSize(14)
-            .fontColor(AISkinColor.secondary)
-        }
-        .width('100%')
-        .height('100%')
-        .justifyContent(FlexAlign.Center)
-        .backgroundColor(Color.Transparent)
+      Stack({ alignContent: Alignment.Bottom }) {
+      if (this.componentPreview) { DesignSystemGallery() } else if (this.checkingAuth) { AISkinStateView({ title: '检查登录状态', kind: AISkinStateKind.Loading })
+      } else if (this.authRestoreError) {
+        AISkinStateView({ title: '登录恢复失败', message: this.authRestoreError, kind: AISkinStateKind.Error,
+          onRetry: (): void => { this.checkAuthStatus() } })
       } else if (!this.isAuthenticated) {
         // Show login or register view
         if (this.onboarding) {
@@ -183,7 +206,9 @@ struct Index {
         } else if (this.showIngredientView) {
           // Show Ingredient View (overlay on top)
           IngredientView({
-            productIdParam: this.ingredientProductId,
+            registerBackHandler: (handler: () => boolean) => { this.ingredientBack = handler },
+            productIdParam: this.ingredientProductId, initialEditMode: this.ingredientEdit,
+            onNavigateToConflictSelection: (productId: string) => { this.showIngredientView = false; this.handleNavigate('/product', { autoEnableConflictMode: true, initialSelectedProductId: productId }) },
             onBack: () => {
               this.handleBackFromIngredient()
             }
@@ -191,17 +216,24 @@ struct Index {
           .width('100%')
           .height('100%')
         } else if (this.currentRoute === '/conflict-history') {
-          ConflictHistoryView({ onBack: () => { this.currentRoute = '/profile' },
+          ConflictHistoryView({ onStart: () => this.handleNavigate('/product',{autoEnableConflictMode:true}), onBack: () => { this.currentRoute = '/profile' },
             onOpen: (report: ConflictAnalysisData) => this.handleNavigateToConflict(report) })
-        } else if (this.currentRoute === '/skinstatus') {
+        } else if (this.currentRoute === '/skinstatus' || this.currentRoute === '/skin-history') {
           SkinStatusView({
-            onBack: () => {
-              this.currentRoute = '/'
-            }
+            registerBackHandler: (handler: () => boolean) => { this.skinBack = handler },
+            openHistory: this.currentRoute === '/skin-history',
+            onProfile: () => { this.currentRoute = '/profile' },
+            onReportVisibility: (visible: boolean) => { this.screenOverlay = visible },
+            onCreatePlan: () => { this.currentRoute = '/'; this.openPlan = true },
+            onBack: () => { this.handleNavigate(this.currentRoute === '/skin-history' ? '/profile' : '/') }
           })
         } else if (this.currentRoute === '/product') {
           ProductView({
+            registerBackHandler: (handler: () => boolean) => { this.productBack = handler },
+            onOverlay: (visible: boolean) => { this.screenOverlay = visible },
             onProfile: () => { this.currentRoute = '/profile' },
+            onEditProduct: (productId: string) => { this.handleNavigateToIngredient(productId,true) },
+            initialSelectedProductId: this.productViewParams?.initialSelectedProductId || '',
             autoEnableConflictMode: this.productViewParams?.autoEnableConflictMode || false,
             onNavigateToIngredient: (productId: string) => {
               this.handleNavigateToIngredient(productId)
@@ -216,6 +248,7 @@ struct Index {
           })
         } else if (this.currentRoute === '/profile') {
           ProfileView({
+            registerBackHandler: (handler: () => boolean) => { this.profileBack = handler },
             onBack: () => { this.currentRoute = '/' },
             onNavigate: (route: string) => this.handleNavigate(route),
             onLogout: () => {
@@ -224,6 +257,9 @@ struct Index {
           })
         } else {
           HomeView({
+            registerBackHandler: (handler: () => boolean) => { this.homeBack = handler },
+            openPlan: this.openPlan, onOverlay: (value: boolean) => { this.screenOverlay = value },
+            onConsumeOpenPlan: () => { this.openPlan = false },
             onProfile: () => { this.currentRoute = '/profile' },
             onNavigate: (route: string, params?: ProductViewParams) => {
               this.handleNavigate(route, params)
@@ -232,7 +268,7 @@ struct Index {
         }
 
         // Bottom Navigation (only show when not in ingredient view or conflict view)
-        if (!this.showIngredientView && !this.showConflictView && this.currentRoute !== '/profile' && this.currentRoute !== '/conflict-history') {
+        if (!this.screenOverlay && !this.showIngredientView && !this.showConflictView && this.currentRoute !== '/profile' && this.currentRoute !== '/skin-history' && this.currentRoute !== '/conflict-history') {
           BottomNavigation({
             currentRoute: this.currentRoute,
             onNavigate: (route: string) => {
@@ -242,6 +278,7 @@ struct Index {
           .width('92%')
         }
       }
+      }.width('100%').height('100%').padding({ top: `${this.safeTopPx}px`, bottom: `${this.safeBottomPx}px`, left: `${this.safeLeftPx}px`, right: `${this.safeRightPx}px` })
     }
     .width('100%')
     .height('100%')
@@ -250,5 +287,6 @@ struct Index {
 
 // Data Models
 interface ProductViewParams {
+  initialSelectedProductId?: string
   autoEnableConflictMode?: boolean
 }

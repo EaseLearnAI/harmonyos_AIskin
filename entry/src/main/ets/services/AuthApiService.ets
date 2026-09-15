@@ -57,7 +57,8 @@ interface RegisterApiResponse {
 /**
  * 获取用户信息API响应接口
  */
-interface GetUserApiResponse {
+export interface GetUserApiResponse {
+  statusCode?: number
   success: boolean
   data?: UserData
   message?: string
@@ -77,6 +78,8 @@ interface BackendUserData {
   name?: string
   phone?: string
   gender?: string
+  age?: number
+  avatar?: string
 }
 
 /**
@@ -138,12 +141,7 @@ export class AuthApiService {
       if (backendData.user) {
 
         // 转换用户数据格式
-        const userData: UserData = {
-          id: backendData.user._id || backendData.user.id,
-          name: backendData.user.name,
-          phone: backendData.user.phone,
-          gender: backendData.user.gender
-        }
+        const userData: UserData = this.mapUser(backendData.user)
 
         // 优先使用response.token（响应体顶层的token）
         const token = response.token || backendData.token || ''
@@ -194,12 +192,7 @@ export class AuthApiService {
       if (backendData.user) {
 
         // 转换用户数据格式
-        const user: UserData = {
-          id: backendData.user._id || backendData.user.id,
-          name: backendData.user.name,
-          phone: backendData.user.phone,
-          gender: backendData.user.gender
-        }
+        const user: UserData = this.mapUser(backendData.user)
 
         const registerResponse: RegisterResponse = {
           user: user,
@@ -242,12 +235,7 @@ export class AuthApiService {
       console.log('✅ 获取用户信息成功')
       
       if (backendData.user) {
-        const userData: UserData = {
-          id: backendData.user._id || backendData.user.id,
-          name: backendData.user.name,
-          phone: backendData.user.phone,
-          gender: backendData.user.gender
-        }
+        const userData: UserData = this.mapUser(backendData.user)
         
         return {
           success: true,
@@ -259,10 +247,30 @@ export class AuthApiService {
     console.error('❌ 获取用户信息失败:', response.message)
     return {
       success: false,
-      message: response.message || '获取用户信息失败'
+      message: response.message || '获取用户信息失败',
+      statusCode: response.statusCode
     }
   }
 
+
+  private mapUser(user: BackendUserData): UserData {
+    return { id: user._id || user.id, name: user.name, phone: user.phone,
+      gender: user.gender, age: user.age, avatar: user.avatar }
+  }
+
+  // Same endpoint and range as iOS UserApiService.updateAge and current server main.
+  async updateAge(age: number, token: string): Promise<GetUserApiResponse> {
+    const headers: Record<string, string> = { 'Authorization': `Bearer ${token}` }
+    const body: Record<string, Object | string | number | boolean> = {}
+    body['age'] = age
+    const response = await this.httpService.request<BackendResponseData>('/users/update-age', {
+      method: 'PATCH', headers: headers, body: body
+    })
+    if (response.success && response.data?.user) {
+      return { success: true, data: this.mapUser(response.data.user) }
+    }
+    return { success: false, message: response.message || '年龄保存失败，请稍后重试', statusCode: response.statusCode }
+  }
 
   async deleteAccount(token: string): Promise<DeleteAccountApiResponse> {
     const headers: Record<string, string> = {

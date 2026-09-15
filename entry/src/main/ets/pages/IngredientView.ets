@@ -1,4 +1,10 @@
-import { AISkinColor, CardStyle } from '../design/AISkinTheme'
+import { AISkinReportTokens } from '../design/Foundation/AISkinReportTokens'
+import { AISkinButton, AISkinIconButton, AISkinTabs, AISkinStateView } from '../design/AISkinPrimitives'
+import { AISkinProcessingScreen } from '../design/AISkinProcessingScreen'
+import { AISkinReportHeading, AISkinReportTextItem, AISkinReportTextStyle, AISkinReportScreen, AISkinReportFooter } from '../design/AISkinReportComponents'
+import { AISkinButtonVariant, AISkinCardInset, AISkinCardRole, AISkinCardState, AISkinSpacing, AISkinStateKind, AISkinTabVariant, AISkinTextRole, AISkinTone } from '../design/Foundation/AISkinTokens'
+import { Modal, AISkinModalPresentation } from '../components/common/Modal'
+import { AISkinColor, CardStyle, TextStyle } from '../design/AISkinTheme'
 import router from '@ohos.router'
 import { AppHeader } from '../components/common/AppHeader'
 import { ProductInfo, ProductData } from '../components/ingredient/ProductInfo'
@@ -8,7 +14,6 @@ import { ProductApiService, UpdateProductRequest } from '../components/product/P
 import { IngredientAnalysisApiService } from '../components/product/IngredientAnalysisApiService'
 import { TagSelector, TagSelectorData } from '../components/product/TagSelector'
 import { DeleteConfirmModal } from '../components/common/DeleteConfirmModal'
-import { Modal } from '../components/common/Modal'
 import { AIContentNotice } from '../components/common/AIContentNotice'
 
 @Component
@@ -18,6 +23,7 @@ export struct IngredientView {
   @State loadingText: string = '加载中...'
   @State error: boolean = false
   @State errorMessage: string = ''
+  @State hasProductDetails: boolean = false
   @State productId: string = ''
   @State product: ProductData = {
     name: '',
@@ -43,13 +49,27 @@ export struct IngredientView {
   }
   @State showTagModal: boolean = false
   @State showDeleteModal: boolean = false
+  @State saving: boolean = false
+  @State deleting: boolean = false
+  @State actionError: string = ''
+  private isDestroyed: boolean = false
+  private generation: number = 0
+  private appliedInitialEdit: boolean = false
+  registerBackHandler?: (handler: () => boolean) => void
+  onOverlay?: (visible: boolean) => void
   private productApiService: ProductApiService = ProductApiService.getInstance()
   private ingredientAnalysisApiService: IngredientAnalysisApiService = IngredientAnalysisApiService.getInstance()
   onBack?: () => void
+  onNavigateToConflictSelection?: (productId: string) => void
+  @State selectedSection: number = 0
+  @State savedNotice: string = ''
 
   @Prop productIdParam: string = ''
+  @Prop initialEditMode: boolean = false
 
   aboutToAppear() {
+    this.isDestroyed = false
+    this.registerBackHandler?.((): boolean => this.handleLocalBack())
     // Get product ID from prop or route parameters
     try {
       if (this.productIdParam && this.productIdParam.length > 0) {
@@ -66,248 +86,132 @@ export struct IngredientView {
     }
   }
 
-  build() {
-    Stack() {
-    Column() {
-      // Header
-      AppHeader({
-        title: '成分分析结果',
-        icon: 'flask',
-        showBackButton: true,
-        bgColor: 'bg-sakura',
-        onBack: () => {
-          if (this.onBack) {
-            this.onBack()
-          }
-        }
-      })
-      .width('100%')
-
-      // Main Content
-      if (this.loading) {
-        this.LoadingState()
-      } else if (this.error) {
-        this.ErrorState()
-      } else {
-        List({ scroller: this.reportScroller, space: 16 }) {
-          ListItem() {
-            Column({ space: 12 }) {
-              AIContentNotice({ scene: '产品成分' })
-              ProductInfo({ product: this.product })
-              AnalysisOverview({ analysis: this.analysis })
-            }.width('100%')
-          }
-          ListItemGroup({ header: this.ReportDirectory, space: 16 }) {
-            ListItem() { this.ReportSection('01', '功效分析', this.summary.efficacyAnalysis || []) }
-            ListItem() { this.ReportSection('02', '潜在风险', this.summary.potentialRisks || []) }
-            ListItem() { this.ReportSection('03', '使用建议', this.summary.recommendations || []) }
-            ListItem() { this.ReportSection('04', '成分表', [this.product.ingredients?.length ? this.product.ingredients.join('、') : '该次记录未提供成分表']) }
-            ListItem() { this.ReportSection('05', '分析小结', [this.summary.summary || '该次记录暂无小结']) }
-          }
-        }.width('100%').layoutWeight(1).padding({ left: 24, right: 24, bottom: 20 }).scrollBar(BarState.Off).sticky(StickyStyle.Header)
-      }
-
-      // Action Buttons - Hide when modals are open
-      if (!this.loading && !this.error && !this.showTagModal && !this.showDeleteModal) {
-        Row() {
-          Button('编辑产品信息')
-            .layoutWeight(1)
-            .height(44)
-            .backgroundColor(AISkinColor.primary)
-            .fontColor(Color.White)
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .borderRadius(12)
-            .margin({ right: 8 })
-            .onClick(() => {
-              console.log('===== 💾 点击保存分析结果 =====')
-              this.showTagModal = true
-            })
-
-          Button('删除')
-            .layoutWeight(1)
-            .height(44)
-            .backgroundColor(AISkinColor.dangerSurface)
-            .fontColor(AISkinColor.danger)
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .borderRadius(12)
-            .onClick(() => {
-              console.log('===== 🗑️ 点击删除分析结果 =====')
-              this.showDeleteModal = true
-            })
-        }
-        .width('100%')
-        .padding({ left: 16, right: 16, bottom: 16, top: 12 })
-        .backgroundColor(AISkinColor.surface)
-        .border({
-          width: { top: 1 },
-          color: AISkinColor.divider,
-          style: BorderStyle.Solid
-        })
-      }
-
-    }.width('100%').height('100%')
-      // Tag Selector Modal
-      if (this.showTagModal) {
-        Stack({ alignContent: Alignment.Center }) {
-          Column()
-            .width('100%')
-            .height('100%')
-            .backgroundColor(AISkinColor.scrim)
-            .onClick(() => {
-              this.showTagModal = false
-            })
-
-          Column() {
-            TagSelector({
-              title: '编辑产品信息',
-              initialName: this.product.name || '',
-              initialOpeningStatus: this.product.openingStatus || 'unknown',
-              initialTag: this.product.label || '',
-              initialDate: this.product.openingDate ? this.formatDateForInput(new Date(this.product.openingDate)) : '',
-              onCancel: () => {
-                console.log('===== ❌ 取消保存 =====')
-                this.showTagModal = false
-              },
-              onConfirm: (data: TagSelectorData) => {
-                this.saveProductInfo(data)
-              }
-            })
-          }
-          .width('90%')
-          .constraintSize({ maxWidth: 400 })
-          .attributeModifier(new CardStyle()).backgroundColor(AISkinColor.dialog)
-          .onClick(() => {
-            // Prevent backdrop click from closing when clicking modal content
-          })
-        }
-        .width('100%')
-        .height('100%')
-        .zIndex(10000)
-      }
-
-      // Delete Confirm Modal
-      DeleteConfirmModal({
-        show: this.showDeleteModal,
-        productName: this.product.name || '产品',
-        onCancel: () => {
-          console.log('===== ❌ 取消删除 =====')
-          this.showDeleteModal = false
-        },
-        onConfirm: () => {
-          this.deleteProduct()
-        }
-      })
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor(Color.Transparent)
+  aboutToDisappear() {
+    this.isDestroyed = true
+    this.generation++
+    this.registerBackHandler?.((): boolean => false)
+    this.onOverlay?.(false)
   }
 
+  handleLocalBack(): boolean {
+    if (this.saving || this.deleting) return true
+    if (this.showTagModal || this.showDeleteModal) {
+      this.showTagModal = false
+      this.showDeleteModal = false
+      this.onOverlay?.(false)
+      return true
+    }
+    return false
+  }
+
+  goBack(): void { if (!this.handleLocalBack()) this.onBack?.() }
+
+  closeEditor(): void {
+    if (this.saving) return
+    this.showTagModal = false
+    this.onOverlay?.(false)
+  }
+
+  closeDelete(): void {
+    if (this.deleting) return
+    this.showDeleteModal = false
+    this.onOverlay?.(false)
+  }
+
+  build() {
+    Stack() {
+      AISkinReportScreen({ header: () => { this.ReportHeader() }, content: () => { this.ReportContent() }, footer: () => { this.ReportFooter() } })
+      Modal({ show: this.showTagModal, presentation: AISkinModalPresentation.Reading, title: '产品信息', isBusy: this.saving, onClose: (): void => { this.closeEditor() }, content: () => { this.EditorContent() }, footer: () => { this.EmptyFooter() } })
+      DeleteConfirmModal({ show: this.showDeleteModal, title: '确认删除产品', productName: this.product.name || '产品',
+        message: `确定要删除“${this.product.name || '产品'}”及关联图片和分析记录吗？此操作无法撤销。`, confirmTitle: '删除',
+        isLoading: this.deleting, onCancel: (): void => { this.closeDelete() }, onConfirm: (): void => { this.deleteProduct() } })
+    }.width('100%').height('100%')
+  }
+  @Builder
+  ReportHeader() { AppHeader({ title: '成分分析结果', showBackButton: true, onBack: (): void => { this.goBack() } }) }
+  @Builder
+  ReportContent() {
+        if (this.loading) {
+          AISkinStateView({ title: this.loadingText, kind: AISkinStateKind.Loading })
+        } else if (this.error) {
+          AISkinStateView({ title: '成分分析加载失败', message: this.errorMessage, kind: AISkinStateKind.Error, onRetry: (): void => { this.loadData() } })
+        } else {
+          List({ scroller: this.reportScroller, space: AISkinReportTokens.sectionGap }) {
+            ListItem() {
+              Column({ space: AISkinSpacing.small }) {
+                ProductInfo({ product: this.product })
+                AnalysisOverview({ analysis: this.analysis })
+                AIContentNotice({ scene: '产品成分' })
+              }.width('100%')
+            }
+            ListItemGroup({ header: () => { this.ReportDirectory() }, space: AISkinReportTokens.sectionGap }) {
+              ListItem() { this.ReportSection('01', '功效分析', this.summary.efficacyAnalysis || []) }
+              ListItem() { this.ReportSection('02', '潜在风险', this.summary.potentialRisks || []) }
+              ListItem() { this.ReportSection('03', '使用建议', this.summary.recommendations || []) }
+              ListItem() { this.ReportSection('04', '成分表', [this.product.ingredients?.length ? this.product.ingredients.join('、') : '该次记录未提供成分表']) }
+              ListItem() {
+                AISkinButton({ title: '和其他产品检查搭配', variant: AISkinButtonVariant.Secondary, onAction: (): void => { this.onNavigateToConflictSelection?.(this.productId) } })
+              }
+              ListItem() { AISkinButton({ title: '评分与风险说明', variant: AISkinButtonVariant.Plain, onAction: (): void => { this.showScoreDetails() } }) }
+            }
+          }.width('100%').layoutWeight(1).padding({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge, bottom: AISkinSpacing.large }).scrollBar(BarState.Off).sticky(StickyStyle.Header)
+        }
+  }
+  @Builder
+  ReportFooter() {
+    if (!this.loading && (!this.error || this.hasProductDetails)) { AISkinReportFooter({ content: () => { this.FooterContent() } }) }
+  }
+  @Builder
+  FooterContent() {
+          Column({ space: AISkinSpacing.xSmall }) {
+            if (this.savedNotice) { Text(this.savedNotice).attributeModifier(new TextStyle(AISkinTextRole.Caption, AISkinTone.Accent)) }
+            if (this.actionError && !this.showTagModal) { Text(this.actionError).attributeModifier(new TextStyle(AISkinTextRole.Caption, AISkinTone.Destructive)) }
+            if (this.error) {
+              AISkinButton({ title: '删除产品', variant: AISkinButtonVariant.Destructive,
+                onAction: (): void => { this.actionError = ''; this.showDeleteModal = true; this.onOverlay?.(true) } })
+            } else { Row({ space: AISkinSpacing.xSmall }) {
+              AISkinIconButton({ name: 'trash', label: '删除分析结果', onAction: () => { this.actionError = ''; this.showDeleteModal = true; this.onOverlay?.(true) } })
+              AISkinButton({ title: '保存分析结果', onAction: () => { this.savedNotice = ''; this.actionError = ''; this.showTagModal = true; this.onOverlay?.(true) } }).layoutWeight(1)
+            }.width('100%') }
+          }.width('100%')
+  }
+  @Builder
+  EditorContent() {
+    Column({ space: AISkinSpacing.small }) {
+      if (this.saving) { AISkinStateView({ title: '正在保存产品信息', kind: AISkinStateKind.Loading }) }
+      if (this.actionError) { Text(this.actionError).attributeModifier(new TextStyle(AISkinTextRole.Caption, AISkinTone.Destructive)).padding(AISkinSpacing.screenEdge) }
+      TagSelector({ title: '保存分析结果', initialName: this.product.name || '', initialTag: this.product.label || '', initialDate: this.product.openingDate || '', initialOpeningStatus: this.product.openingStatus || 'unknown', onCancel: (): void => { this.closeEditor() }, onConfirm: (data: TagSelectorData): void => { this.saveProductInfo(data) } }).enabled(!this.saving)
+    }.width('100%')
+  }
+  @Builder
+  EmptyFooter() { Column() {} }
   @Builder
   ReportDirectory() {
-    Row({ space: 4 }) {
-      ForEach(['功效', '风险', '建议', '成分'], (title: string, index: number) => {
-        Button(title).height(44).layoutWeight(1).fontSize(13).fontColor(AISkinColor.accent).backgroundColor(Color.Transparent)
-          .onClick(() => { this.reportScroller.scrollToItemInGroup(1, index, true, ScrollAlign.START) })
-      })
-    }.width('100%').padding(4).backgroundColor(AISkinColor.elevated).borderRadius(24).margin({ bottom: 16 })
+    AISkinTabs({ items: ['功效', '风险', '建议', '成分'], selection: this.selectedSection, variant: AISkinTabVariant.Underline,
+      onSelect: (index: number) => { this.selectedSection = index; this.reportScroller.scrollToItemInGroup(1, index, true, ScrollAlign.START) } })
   }
   @Builder
   ReportSection(number: string, title: string, items: string[]) {
-    Column({ space: 16 }) {
-      Row({ space: 12 }) { Text(number).fontSize(12).fontColor(AISkinColor.accent); Text(title).fontSize(18).fontWeight(FontWeight.Medium).fontColor(AISkinColor.text) }
-      if (!items.length) { Text('该次分析未提供此项内容').fontSize(14).fontColor(AISkinColor.secondary) }
-      ForEach(items, (item: string) => { Text(item).fontSize(14).lineHeight(24).fontColor(AISkinColor.text).width('100%') })
-    }.width('100%').padding(20).alignItems(HorizontalAlign.Start).attributeModifier(new CardStyle())
+    Column({ space: AISkinSpacing.small }) {
+      AISkinReportHeading({ number, title })
+      Column({ space: AISkinSpacing.medium }) {
+        if (!items.length) { AISkinReportTextItem({ text: '该次分析未提供此项内容' }) }
+        ForEach(items, (item: string) => { AISkinReportTextItem({ text: item, style: AISkinReportTextStyle.Reading }) })
+      }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Content, AISkinCardState.Normal, AISkinCardInset.Regular))
+    }.width('100%')
   }
-
-  @Builder
-  AnalysisBasisCard() {
-    Column() {
-      Text('分析依据')
-        .fontSize(16)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(AISkinColor.text)
-        .width('100%')
-        .margin({ bottom: 10 })
-
-      Text('1. 用户主动选择的产品图片与产品信息')
-        .fontSize(13)
-        .fontColor(AISkinColor.text)
-        .lineHeight(20)
-        .width('100%')
-      Text('2. 服务端返回的成分识别、功效与风险分析结果')
-        .fontSize(13)
-        .fontColor(AISkinColor.text)
-        .lineHeight(20)
-        .width('100%')
-      Text('3. 致痘、刺激和过敏风险采用分级方式展示')
-        .fontSize(13)
-        .fontColor(AISkinColor.text)
-        .lineHeight(20)
-        .width('100%')
-    }
-    .width('100%')
-    .padding(14)
-    .backgroundColor(AISkinColor.white)
-    .borderRadius(12)
-    .margin({ bottom: 16 })
-  }
-
-  @Builder
-  LoadingState() {
-    Column() {
-      LoadingProgress()
-        .width(48)
-        .height(48)
-        .color(AISkinColor.accent)
-        .margin({ bottom: 16 })
-
-      Text(this.loadingText)
-        .fontSize(16)
-        .fontColor(AISkinColor.secondary)
-    }
-    .width('100%')
-    .layoutWeight(1)
-    .justifyContent(FlexAlign.Center)
-  }
-
-  @Builder
-  ErrorState() {
-    Column() {
-      Text('⚠️')
-        .fontSize(48)
-        .margin({ bottom: 16 })
-
-      Text(this.errorMessage)
-        .fontSize(16)
-        .fontColor(AISkinColor.secondary)
-        .textAlign(TextAlign.Center)
-        .margin({ bottom: 16 })
-
-      Button('重试')
-        .width(120)
-        .height(40)
-        .backgroundColor(AISkinColor.primary)
-        .fontColor(Color.White)
-        .borderRadius(20)
-        .onClick(() => {
-          this.loadData()
-        })
-    }
-    .width('100%')
-    .layoutWeight(1)
-    .justifyContent(FlexAlign.Center)
-    .padding(32)
+  showScoreDetails() {
+    const risks = [`致痘：${this.analysis.acneRisk?.level || '未提供'}`, `刺激：${this.analysis.irritationRisk?.level || '未提供'}`, `过敏：${this.analysis.allergyRisk?.level || '未提供'}`].join('\n')
+    AlertDialog.show({ title: '评分与风险说明', message: `安全性指数：${this.analysis.safetyIndex ?? '未提供'} / 100\n功效评分：${this.analysis.efficacyScore ?? '未提供'} / 5\n活性成分：${this.analysis.activeIngredients ?? '未提供'} 项\n${risks}\n评分为模型估计，仅供日常护肤参考。`, confirm: { value: '知道了', action: () => {} } })
   }
 
   async loadData() {
+    const generation = ++this.generation
     console.log('===== 🔍 加载产品成分分析数据 =====')
     this.loading = true
     this.loadingText = '加载产品信息...'
     this.error = false
+    this.hasProductDetails = false
 
     try {
       if (!this.productId || this.productId === 'default-product-id') {
@@ -317,12 +221,14 @@ export struct IngredientView {
       // 1. 获取产品详情
       this.loadingText = '加载产品信息...'
       const productResponse = await this.productApiService.getProduct(this.productId)
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (!productResponse.success || !productResponse.data?.product) {
         throw new Error(productResponse.message || '获取产品信息失败')
       }
 
       const productData = productResponse.data.product
+      this.hasProductDetails = true
       this.product = {
         name: productData.name || '未命名产品',
         description: productData.description || '暂无描述',
@@ -338,6 +244,7 @@ export struct IngredientView {
       // 2. 获取成分分析结果
       this.loadingText = '加载成分分析...'
       const analysisResponse = await this.ingredientAnalysisApiService.getIngredientAnalysis(this.productId)
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (analysisResponse.success && analysisResponse.data?.ingredientAnalysis) {
         const analysisData = analysisResponse.data.ingredientAnalysis
@@ -375,9 +282,11 @@ export struct IngredientView {
         }
         
         const analysis: AnalysisData = {} as AnalysisData
-        analysis.safetyIndex = analysisData.safetyIndex || 0
-        analysis.efficacyScore = analysisData.efficacyScore || 0
-        analysis.activeIngredients = analysisData.activeIngredients || 0
+        analysis.overallRating = analysisData.overallRating
+        analysis.summary = analysisData.summary
+        analysis.safetyIndex = analysisData.safetyIndex
+        analysis.efficacyScore = analysisData.efficacyScore
+        analysis.activeIngredients = analysisData.activeIngredients
         analysis.acneRisk = acneRisk
         analysis.irritationRisk = irritationRisk
         analysis.allergyRisk = allergyRisk
@@ -395,23 +304,31 @@ export struct IngredientView {
         console.log(`✅ 成分分析加载成功`)
       } else {
         console.warn('⚠️ 未找到成分分析结果，可能尚未分析')
-        throw new Error(analysisResponse.message || '此产品尚无成分分析结果，请返回护肤柜重新分析。')
+        throw new Error(analysisResponse.message || '此产品尚无成分分析结果。可返回护肤柜添加清晰的成分图片；不再需要的草稿可在下方删除。')
       }
 
       this.loading = false
     } catch (error) {
+      if (this.isDestroyed || generation !== this.generation) return
       console.error('❌ Error loading data')
       this.error = true
       this.errorMessage = error instanceof Error ? error.message : '加载数据失败，请重试'
       this.loading = false
+    } finally {
+      if (!this.isDestroyed && generation === this.generation && this.hasProductDetails && this.initialEditMode && !this.appliedInitialEdit) {
+        this.appliedInitialEdit = true
+        this.showTagModal = true
+        this.onOverlay?.(true)
+      }
     }
   }
 
   async saveProductInfo(data: TagSelectorData) {
+    if (this.saving || this.deleting || this.isDestroyed) return
+    const generation = ++this.generation
     console.log('===== ✏️ 保存产品信息 =====')
-    this.loading = true
-    this.loadingText = '保存产品信息中...'
-    this.showTagModal = false
+    this.saving = true
+    this.actionError = ''
 
     try {
       if (!this.productId) {
@@ -423,40 +340,38 @@ export struct IngredientView {
       updateData.name = data.name
       updateData.label = data.tag || ''
       updateData.openingStatus = data.openingStatus
-      if (data.openingDate) updateData.openingDate = data.openingDate
+      updateData.openingDate = data.openingStatus === 'opened' ? data.openingDate : ''
 
       const response = await this.productApiService.updateProduct(this.productId, updateData)
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (!response.success) {
         throw new Error(response.message || '保存产品信息失败')
       }
 
       // 更新本地数据
-      this.product.name = data.name
-      this.product.label = data.tag || ''
-      this.product.openingStatus = data.openingStatus
-      this.product.openingDate = data.openingDate || ''
+      this.product = { name: data.name, description: this.product.description, imageUrl: this.product.imageUrl,
+        ingredients: this.product.ingredients, label: data.tag || '', openingStatus: data.openingStatus, openingDate: data.openingDate || '' }
 
       console.log('✅ 产品信息保存成功')
-      this.loading = false
-
-      // Navigate back to product page
-      if (this.onBack) {
-        this.onBack()
-      }
+      this.saving = false
+      this.closeEditor()
+      this.savedNotice = '产品信息已保存'
     } catch (error) {
+      if (this.isDestroyed || generation !== this.generation) return
       console.error('❌ Error saving product info')
-      this.error = true
-      this.errorMessage = error instanceof Error ? error.message : '保存产品信息失败，请重试'
-      this.loading = false
+      this.actionError = error instanceof Error ? error.message : '保存产品信息失败，请重试'
+    } finally {
+      if (!this.isDestroyed && generation === this.generation) this.saving = false
     }
   }
 
   async deleteProduct() {
+    if (this.saving || this.deleting || this.isDestroyed) return
+    const generation = ++this.generation
     console.log('===== 🗑️ 删除产品 =====')
-    this.loading = true
-    this.loadingText = '删除中...'
-    this.showDeleteModal = false
+    this.deleting = true
+    this.actionError = ''
 
     try {
       if (!this.productId) {
@@ -464,22 +379,28 @@ export struct IngredientView {
       }
 
       const response = await this.productApiService.deleteProduct(this.productId)
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (!response.success) {
         throw new Error(response.message || '删除产品失败')
       }
 
       console.log('✅ 产品删除成功')
+      this.deleting = false
+      this.closeDelete()
 
       // Navigate back to product page
       if (this.onBack) {
         this.onBack()
       }
     } catch (error) {
+      if (this.isDestroyed || generation !== this.generation) return
       console.error('❌ Error deleting product')
-      this.error = true
-      this.errorMessage = error instanceof Error ? error.message : '删除产品失败，请重试'
-      this.loading = false
+      this.actionError = error instanceof Error ? error.message : '删除产品失败，请重试'
+      this.deleting = false
+      this.closeDelete()
+    } finally {
+      if (!this.isDestroyed && generation === this.generation) this.deleting = false
     }
   }
 

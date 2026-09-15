@@ -1,4 +1,7 @@
-import { AISkinColor, CardStyle } from '../design/AISkinTheme'
+import { CardStyle } from '../design/AISkinTheme'
+import { AISkinButton, AISkinStateView } from '../design/AISkinPrimitives'
+import { AISkinReportHeading, AISkinReportTextItem } from '../design/AISkinReportComponents'
+import { AISkinCardInset, AISkinCardRole, AISkinCardState, AISkinSpacing, AISkinStateKind } from '../design/Foundation/AISkinTokens'
 import { AppHeader } from '../components/common/AppHeader'
 import { ConflictApiService, ConflictAnalysisData } from '../components/product/ConflictApiService'
 @Component
@@ -8,6 +11,7 @@ export struct ConflictHistoryView {
   @State error: string = ''
   onOpen: (report: ConflictAnalysisData) => void = () => {}
   onBack: () => void = () => {}
+  onStart?: () => void
   aboutToAppear() { this.load() }
   async load() {
     this.loading = true
@@ -17,29 +21,23 @@ export struct ConflictHistoryView {
     this.loading = false
   }
   build() {
-    Column() {
+    Column({ space: AISkinSpacing.medium }) {
       AppHeader({ title: '冲突检测历史', showBackButton: true, onBack: this.onBack })
       Scroll() {
-        Column({ space: 12 }) {
-          if (this.loading) { LoadingProgress().color(AISkinColor.accent).width(40).height(40) }
-          if (this.error) {
-            Text(this.error).fontColor(AISkinColor.secondary)
-            Button('重试').onClick(() => this.load())
-          } else if (!this.loading && this.records.length === 0) {
-            Text('暂无冲突检测记录').fontSize(18).fontColor(AISkinColor.text).margin({ top: 60 })
-            Text('在护肤柜中选择至少两件产品，检查搭配。').fontSize(14).fontColor(AISkinColor.secondary)
-          }
+        Column({ space: AISkinSpacing.medium }) {
+          if (this.loading) { AISkinStateView({ title: '正在加载检测记录', kind: AISkinStateKind.Loading }) }
+          else if (this.error) { AISkinStateView({ title: '记录加载失败', message: this.error, kind: AISkinStateKind.Error, onRetry: (): void => { this.load() } }) }
+          else if (this.records.length === 0) { AISkinStateView({ title: '还没有冲突检测报告', message: '选择至少 2 件护肤品完成检测，报告会保存在这里。', kind: AISkinStateKind.Empty }) }
+          else { AISkinReportHeading({ title: '历史报告', detail: `共 ${this.records.length} 份` }) }
           ForEach(this.records, (record: ConflictAnalysisData) => {
-            Button() {
-              Column({ space: 12 }) {
-                Text((record.products || []).map(p => p.name || '未命名产品').join(' ＋ ')).fontSize(17).fontColor(AISkinColor.text)
-                Text(record.summary || '查看搭配分析').fontSize(14).lineHeight(22).fontColor(AISkinColor.secondary)
-                Text((record.createdAt || '').slice(0,10)).fontSize(12).fontColor(AISkinColor.secondary)
-              }.width('100%').alignItems(HorizontalAlign.Start).padding(20)
-            }.type(ButtonType.Normal).width('100%').attributeModifier(new CardStyle()).onClick(() => this.onOpen(record))
+            Column({ space: AISkinSpacing.medium }) {
+              AISkinReportTextItem({ text: `${(record.createdAt || '').slice(0, 10) || '时间未记录'} · ${record.products?.length || 0} 件产品` })
+              AISkinReportTextItem({ title: (record.products || []).map(p => p.name || '未命名产品').join(' ＋ '), text: record.summary || '查看搭配分析' })
+            }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Content, AISkinCardState.Normal, AISkinCardInset.Regular)).onClick((): void => { this.onOpen(record) })
           })
-        }.width('100%').padding({ left: 20, right: 20, bottom: 90 })
+        }.width('100%').padding({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge, bottom: AISkinSpacing.large })
       }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.Top)
+      if (this.onStart) { AISkinButton({ title: '开始新的检测', onAction: this.onStart }).margin({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge, bottom: AISkinSpacing.medium }) }
     }.width('100%').height('100%')
   }
 }

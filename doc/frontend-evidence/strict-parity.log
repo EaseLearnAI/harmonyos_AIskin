@@ -1,0 +1,45 @@
+Source structure audit: 41 frontend business files; iOS 9f69aa94dde44d0d0e91fe16bb85b9df82156648
+Builder callback contracts: all 81 frontend .ets files (including design/).
+This report does not verify screenshots, interaction, or device appearance.
+
+Findings (0):
+  No occurrences of the explicitly scanned private modifiers, native controls, or bare builder callbacks.
+
+Reference asset byte hashes:
+  match: onboarding_skin.png 74017f9342bfc20a20150a19bd80c3c94ba557d90464eb1471c65128fdd1ec86
+  match: onboarding_conflict.png a37ca8dc3451b881d2215a3f32a01dfb87c6a318d7cdbc1835f0f55d9ab5876c
+  match: onboarding_ingredient.png 05b75437f0742b54b5cc981fba365415cad2e93408b489a56e7637e9b408ead7
+  match: product_capture.png 3e67bd3538fff042e91876eb0bf0bc352d2bfd7f131f10576b4ffb943d26dce9
+
+Reference tokens: 58/58 matched
+
+Reference light palette: 18/22 matched (8-bit quantization tolerance: 1)
+  accessibility_deviation: aiskin_secondary=#544A5C vs AISkinColor.textSecondary=#FF706878
+  accessibility_deviation: aiskin_danger=#B3261E vs AISkinColor.destructive=#FFD42E33
+  accessibility_deviation: aiskin_warning=#8A4B00 vs AISkinColor.warning=#FFF0962E
+  accessibility_deviation: aiskin_success=#2E7D32 vs AISkinColor.success=#FF339E6B
+  Four exact contrast-remediation colors are retained accessibility warnings; all other differences fail. Use --strict-parity to reject every deviation.
+
+Shared call sites (facades included; zero direct page calls can be intentional):
+  AISkinButton: 45 calls across 17 files
+  AISkinField: 10 calls across 6 files
+  AISkinIconButton: 3 calls across 2 files
+  AISkinHeader: 3 calls across 3 files
+  AppHeader: 9 calls across 9 files
+  AISkinTabBar: 1 calls across 1 files
+  BottomNavigation: 1 calls across 1 files
+  AISkinTabs: 4 calls across 4 files
+  AISkinTag: 8 calls across 3 files
+  AISkinStateView: 36 calls across 15 files
+  AISkinCard: 0 calls across 0 files
+  CardStyle: 17 calls across 11 files
+  TextStyle: 52 calls across 15 files
+  Modal: 9 calls across 8 files
+  DocumentModal: 4 calls across 3 files
+  DeleteConfirmModal: 3 calls across 2 files
+  AISkinProfilePanel: 1 calls across 1 files
+  AISkinProfileIdentity: 1 calls across 1 files
+  AISkinSettingsRow: 0 calls across 0 files
+  AISkinSettingsGroup: 5 calls across 2 files
+
+Structural findings: 0; unreviewed parity failures/unverified: 0; retained accessibility deviations: 4

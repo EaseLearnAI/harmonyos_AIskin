@@ -1,6 +1,9 @@
 import { ProcessingPanel } from '../common/ProcessingPanel'
 import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
-import { ImageUploader } from './ImageUploader'
+import { AISkinButton, AISkinStateView } from '../../design/AISkinPrimitives'
+import { AISkinProcessingScreen } from '../../design/AISkinProcessingScreen'
+import { Modal } from '../common/Modal'
+import { AISkinButtonVariant, AISkinSpacing, AISkinStateKind } from '../../design/Foundation/AISkinTokens'
 import { ProductApiService } from './ProductApiService'
 import { IngredientAnalysisApiService } from './IngredientAnalysisApiService'
 import { ImagePickerService } from '../../services/ImagePickerService'
@@ -9,6 +12,19 @@ import { common } from '@kit.AbilityKit'
 @Component
 export struct ProductUploadModal {
   @Prop showModal: boolean = false
+  @Prop initialSource: string = ''
+  aboutToAppear() {
+    this.isDestroyed = false
+    this.registerBackHandler?.((): boolean => { this.handleClose(); return true })
+    this.onOverlay?.(true)
+    if (this.initialSource) this.requestImageConsent(this.initialSource)
+  }
+  aboutToDisappear() {
+    this.isDestroyed = true
+    this.generation++
+    this.registerBackHandler?.((): boolean => false)
+    this.onOverlay?.(false)
+  }
   @State selectedImage: string | null = null
   @State selectedImagePath: string | null = null
   @State productId: string | null = null
@@ -27,171 +43,34 @@ export struct ProductUploadModal {
   private productApiService: ProductApiService = ProductApiService.getInstance()
   private ingredientAnalysisApiService: IngredientAnalysisApiService = IngredientAnalysisApiService.getInstance()
   private imagePickerService: ImagePickerService = ImagePickerService.getInstance()
+  private isDestroyed: boolean = false
+  private isPicking: boolean = false
+  private generation: number = 0
+  registerBackHandler?: (handler: () => boolean) => void
+  onOverlay?: (visible: boolean) => void
   onClose?: () => void
   onProductAdded?: (productId: string) => void
 
   build() {
     if (this.showModal) {
-      this.ModalContent()
+      if (this.isLoading || this.isExtracting || this.isAnalyzing) {
+        AISkinProcessingScreen({ title: '成分分析', message: '正在识别产品并整理成分报告', onCancel: (): void => { this.handleClose() } })
+      } else {
+        Modal({ show: true, title: '添加护肤产品', onClose: (): void => { this.handleClose() }, content: () => { this.UploadContent() }, footer: () => { this.UploadFooter() } })
+      }
     }
   }
-
   @Builder
-  ModalContent() {
-    // Full screen backdrop with blur
-    Stack({ alignContent: Alignment.Center }) {
-      // Modal Content
-      Stack() {
-        Column() {
-          // Modal Header with Title and Close Button
-          Row() {
-            Blank()
-            Text('添加护肤产品')
-              .fontSize(20)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AISkinColor.text)
-              .layoutWeight(1)
-              .textAlign(TextAlign.Center)
-
-            Button() {
-              Text('✕')
-                .fontSize(18)
-                .fontColor(AISkinColor.secondary)
-            }
-            .type(ButtonType.Circle)
-            .width(36)
-            .height(36)
-            .backgroundColor(AISkinColor.muted)
-            .onClick(() => {
-              this.handleClose()
-            })
-          }
-          .width('100%')
-          .padding({ top: 16, bottom: 16, left: 24, right: 24 })
-
-          // Subtitle
-          Text('上传产品图片，AI将自动识别产品成分并进行分析')
-            .fontSize(14)
-            .fontColor(AISkinColor.secondary)
-            .textAlign(TextAlign.Center)
-            .margin({ bottom: 20, left: 24, right: 24 })
-
-          // Error Message
-          if (this.modalError) {
-            Row() {
-              Text('⚠️')
-                .fontSize(16)
-                .margin({ right: 8 })
-              Text(this.modalErrorMessage)
-                .fontSize(14)
-                .fontColor(AISkinColor.danger)
-                .layoutWeight(1)
-            }
-            .width('100%')
-            .padding(12)
-            .backgroundColor(AISkinColor.dangerSurface)
-            .borderRadius(12)
-            .margin({ bottom: 20, left: 24, right: 24 })
-          }
-
-          // Image Uploader (只在未开始分析时显示)
-          if (this.currentStep === 0 && !this.isLoading && !this.isExtracting && !this.isAnalyzing) {
-            ImageUploader({
-              placeholder: '点击选择产品图片',
-              imagePath: this.selectedImagePath,
-              onImageSelected: (image: string) => {
-                console.log(`===== 📸 图片已选择回调 =====`)
-                this.selectedImage = image
-                this.selectedImagePath = image
-                this.modalError = false
-                console.log(`✅ 图片状态已更新，自动开始分析流程`)
-                // 自动开始执行分析流程
-                this.submitProduct()
-              },
-              onImageRemoved: () => {
-                console.log(`===== 🗑️ 图片已移除 =====`)
-                this.selectedImage = null
-                this.selectedImagePath = null
-              },
-              onSelectImage: () => {
-                this.requestImageConsent()
-              }
-            })
-            .margin({ bottom: 20, left: 24, right: 24 })
-          }
-
-          if (this.currentStep > 0 && !this.modalError) {
-            ProcessingPanel({ title: '成分分析', message: '正在识别产品并整理成分报告' })
-          }
-
-          Blank()
-
-          // Submit Button (只在未开始分析时显示)
-          if (this.currentStep === 0 && !this.isLoading && !this.isExtracting && !this.isAnalyzing) {
-            Button(this.getSubmitButtonText())
-              .width('100%')
-              .height(44)
-              .backgroundColor(this.canSubmit() ? AISkinColor.primary : AISkinColor.divider)
-              .fontColor(this.canSubmit() ? Color.White : AISkinColor.secondary)
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .borderRadius(12)
-              .enabled(this.canSubmit() && !this.isLoading && !this.isExtracting && !this.isAnalyzing)
-              .margin({ left: 24, right: 24, bottom: 24 })
-              .onClick(() => {
-                this.submitProduct()
-              })
-          }
-        }
-        .width('100%')
-        .layoutWeight(1)
-      }
-      .width('90%')
-      .attributeModifier(new CardStyle()).backgroundColor(AISkinColor.dialog)
-      .constraintSize({ maxHeight: '90%' })
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('rgba(0, 0, 0, 0.4)')
-    .onClick(() => {
-      this.handleClose()
-    })
+  UploadContent() {
+    Column({ space: AISkinSpacing.medium }) {
+      if (this.modalError) { AISkinStateView({ title: '成分分析未完成', message: this.modalErrorMessage, kind: AISkinStateKind.Error, onRetry: (): void => { this.submitProduct() } }) }
+      AISkinStateView({ title: '拍一张，就能分析', message: '拍摄或上传清晰的产品成分表，查看主要功效与潜在风险。', kind: AISkinStateKind.Empty })
+      AISkinButton({ title: '拍照分析', onAction: (): void => { this.requestImageConsent('camera') } })
+      AISkinButton({ title: '从相册上传', variant: AISkinButtonVariant.Secondary, onAction: (): void => { this.requestImageConsent('library') } })
+    }.width('100%').padding(AISkinSpacing.screenEdge)
   }
-
   @Builder
-  ProgressStep(step: number, title: string, status: string) {
-    Row() {
-      Column() {
-        Text(step.toString())
-          .fontSize(14)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.currentStep >= step ? Color.White : AISkinColor.secondary)
-      }
-      .width(28)
-      .height(28)
-      .backgroundColor(this.currentStep >= step ? AISkinColor.primary : AISkinColor.divider)
-      .borderRadius(14)
-      .justifyContent(FlexAlign.Center)
-      .margin({ right: 12 })
-
-      Column() {
-        Text(title)
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AISkinColor.text)
-          .margin({ bottom: 2 })
-
-        Text(status)
-          .fontSize(12)
-          .fontColor(AISkinColor.secondary)
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-    }
-    .width('100%')
-    .margin({ bottom: 6 })
-    .opacity(this.currentStep >= step ? 1 : 0.5)
-  }
+  UploadFooter() { Column() {} }
 
   canSubmit(): boolean {
     return this.selectedImage !== null
@@ -204,19 +83,26 @@ export struct ProductUploadModal {
   }
 
   handleClose() {
+    this.isDestroyed = true
+    this.generation++
     this.resetModal()
+    this.onOverlay?.(false)
     if (this.onClose) {
       this.onClose()
     }
   }
 
-  requestImageConsent(): void {
+  requestImageConsent(source: string = 'library'): void {
+    if (this.isDestroyed || this.isPicking || this.isLoading) return
     AlertDialog.show({ title: '确认AI图片处理', message: '你选择的产品图片将上传至阿里云对象存储并交由通义千问模型识别成分、生成分析报告。图片和结果保存在账号中，可随产品或账号一并删除。请避免上传含个人信息的图片。',
       primaryButton: { value: '取消', action: () => {} },
-      secondaryButton: { value: '同意并选择图片', action: () => { this.handleSelectImage() } } })
+      secondaryButton: { value: '同意并选择图片', action: () => { this.handleSelectImage(source) } } })
   }
 
-  async handleSelectImage() {
+  async handleSelectImage(source: string = 'library') {
+    if (this.isDestroyed || this.isPicking || this.isLoading) return
+    const generation = ++this.generation
+    this.isPicking = true
     console.log('===== 🖼️ 启动照片选择功能 =====')
     console.log('📱 在 ProductUploadModal 中处理图片选择')
     
@@ -227,7 +113,9 @@ export struct ProductUploadModal {
       
       // 从相册选择图片
       console.log('📂 调用 ImagePickerService.selectFromGallery...')
-      const pickResult = await this.imagePickerService.selectFromGallery(context)
+      const pickResult = source === 'camera' ? await this.imagePickerService.takePhoto(context) : await this.imagePickerService.selectFromGallery(context)
+      if (this.isDestroyed || generation !== this.generation) return
+      this.isPicking = false
       
       if (pickResult.success && pickResult.filePath) {
         console.log('✅ 已选择图片')
@@ -242,14 +130,19 @@ export struct ProductUploadModal {
         console.log(`ℹ️ 用户取消选择或选择失败: ${pickResult.message || '未知错误'}`)
       }
     } catch (error) {
+      if (this.isDestroyed || generation !== this.generation) return
       console.error('❌ 选择图片失败')
       this.modalError = true
       this.modalErrorMessage = '选择图片失败，请重试'
+    } finally {
+      if (!this.isDestroyed && generation === this.generation) this.isPicking = false
     }
   }
 
   async submitProduct() {
-    if (!this.canSubmit() || !this.selectedImagePath) return
+    if (this.isDestroyed || this.isLoading || !this.canSubmit() || !this.selectedImagePath) return
+    const generation = ++this.generation
+    const imagePath = this.selectedImagePath
 
     this.isLoading = true
     this.modalError = false
@@ -257,12 +150,14 @@ export struct ProductUploadModal {
     this.stepStatus.create = '创建中...'
 
     try {
-      // Step 1: Create product
+      // Keep the draft product on retry instead of creating a duplicate.
+      if (!this.productId) {
       const createResponse = await this.productApiService.createProduct({
         name: '未命名产品',
         description: '这是一个用于成分分析的产品',
         label: ''
       })
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (!createResponse.success || !createResponse.data?.product) {
         throw new Error(createResponse.message || '创建产品失败')
@@ -273,12 +168,14 @@ export struct ProductUploadModal {
         throw new Error('无法获取产品ID')
       }
 
+      }
       this.stepStatus.create = '创建成功'
       this.currentStep = 2
 
       // Step 2: Upload image
       this.stepStatus.upload = '上传中...'
-      const uploadResponse = await this.productApiService.uploadProductImage(this.productId, this.selectedImagePath)
+      const uploadResponse = await this.productApiService.uploadProductImage(this.productId, imagePath)
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (!uploadResponse.success) {
         throw new Error(uploadResponse.message || '上传图片失败')
@@ -291,6 +188,7 @@ export struct ProductUploadModal {
       this.isExtracting = true
       this.stepStatus.extract = '提取中...'
       const extractResponse = await this.productApiService.extractIngredients(this.productId)
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (!extractResponse.success) {
         throw new Error(extractResponse.message || '提取成分失败')
@@ -305,6 +203,7 @@ export struct ProductUploadModal {
       this.isAnalyzing = true
       this.stepStatus.analyze = '分析中...'
       const analyzeResponse = await this.ingredientAnalysisApiService.analyzeIngredients(this.productId)
+      if (this.isDestroyed || generation !== this.generation) return
 
       if (!analyzeResponse.success) {
         throw new Error(analyzeResponse.message || '分析成分失败')
@@ -315,12 +214,12 @@ export struct ProductUploadModal {
       this.isAnalyzing = false
 
       // Complete
-      if (this.onProductAdded && this.productId) {
-        this.onProductAdded(this.productId)
-      }
-
+      const completedProductId = this.productId
+      this.isLoading = false
       this.handleClose()
+      if (completedProductId) this.onProductAdded?.(completedProductId)
     } catch (error) {
+      if (this.isDestroyed || generation !== this.generation) return
       console.error('❌ Error submitting product')
       this.modalError = true
       this.modalErrorMessage = error instanceof Error ? error.message : '处理失败，请重试'
@@ -338,11 +237,15 @@ export struct ProductUploadModal {
         this.isAnalyzing = false
       }
     } finally {
-      this.isLoading = false
+      if (!this.isDestroyed && generation === this.generation) this.isLoading = false
     }
   }
 
   resetModal() {
+    this.isLoading = false
+    this.isExtracting = false
+    this.isAnalyzing = false
+    this.isPicking = false
     this.selectedImage = null
     this.selectedImagePath = null
     this.productId = null

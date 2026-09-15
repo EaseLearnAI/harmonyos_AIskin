@@ -111,6 +111,18 @@
     {
       "name": "aiskin_dialog",
       "value": "#FFF9F7FC"
+    },
+    {
+      "name": "aiskin_featureSurface",
+      "value": "#52FFFFFF"
+    },
+    {
+      "name": "aiskin_routineSurface",
+      "value": "#5EFFFFFF"
+    },
+    {
+      "name": "aiskin_floating_shadow",
+      "value": "#262D2B32"
     }
   ]
 }

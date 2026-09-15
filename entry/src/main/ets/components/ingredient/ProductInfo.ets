@@ -1,20 +1,18 @@
-import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
+import { TextStyle } from '../../design/AISkinTheme'
+import { AISkinSpacing, AISkinTextRole, AISkinTone } from '../../design/Foundation/AISkinTokens'
+import { ProductThumbnail, ProductThumbnailSize } from '../../design/AISkinProductThumbnail'
 @Component
 export struct ProductInfo {
   @Prop product: ProductData = {}
   build() {
-    Row({ space: 16 }) {
-      if (this.product.imageUrl) {
-        Image(this.product.imageUrl).width(84).height(100).objectFit(ImageFit.Contain).borderRadius(16)
-      } else {
-        Image($r('app.media.product_capture')).width(84).height(100).objectFit(ImageFit.Contain).opacity(0.7)
-      }
-      Column({ space: 10 }) {
-        Text(this.product.name || '未命名产品').fontSize(20).fontWeight(FontWeight.Medium).fontColor(AISkinColor.text)
-        if (this.product.label) { Text(this.product.label).fontSize(12).fontColor(AISkinColor.accent).padding(8).backgroundColor(AISkinColor.selected).borderRadius(12) }
-        Text(this.product.openingStatus === 'unopened' ? '未开封' : this.product.openingDate ? `开封于 ${new Date(this.product.openingDate).toLocaleDateString()}` : '未记录开封日期').fontSize(12).fontColor(AISkinColor.secondary)
+    Row({ space: AISkinSpacing.medium }) {
+      ProductThumbnail({ url: this.product.imageUrl || '', thumbnailSize: ProductThumbnailSize.Report })
+      Column({ space: AISkinSpacing.xSmall }) {
+        Text([this.product.label, '成分报告'].filter(value => !!value).join(' · ')).attributeModifier(new TextStyle(AISkinTextRole.Caption, AISkinTone.Secondary))
+        Text(this.product.name || '未命名产品').attributeModifier(new TextStyle(AISkinTextRole.ScreenTitle)).width('100%')
+        Text('分析已完成').attributeModifier(new TextStyle(AISkinTextRole.Caption, AISkinTone.Accent))
       }.layoutWeight(1).alignItems(HorizontalAlign.Start)
-    }.width('100%').padding(20).attributeModifier(new CardStyle()).margin({ bottom: 16 })
+    }.width('100%').padding({ top: AISkinSpacing.small })
   }
 }
 export interface ProductData { name?: string; description?: string; imageUrl?: string; label?: string; openingDate?: string; openingStatus?: string; ingredients?: string[] }

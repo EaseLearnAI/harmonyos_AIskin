@@ -1,28 +1,17 @@
-import { AISkinColor } from '../../design/AISkinTheme'
-import { AISkinIcon } from '../../design/AISkinIcon'
-
+import { AISkinTabBar, AISkinTabItem } from '../../design/AISkinTabBar'
+import { AISkinSpacing } from '../../design/Foundation/AISkinTokens'
 @Component
 export struct BottomNavigation {
   @Prop currentRoute: string = '/'
   onNavigate?: (route: string) => void
+  private items: AISkinTabItem[] = [
+    { title: '首页', icon: 'homeFilled', route: '/' },
+    { title: '护肤柜', icon: 'cabinetFilled', route: '/product' },
+    { title: '肌肤检测', icon: 'planFilled', route: '/skinstatus' }
+  ]
   build() {
-    Row() {
-      this.item('首页', 'home', '/')
-      this.item('护肤柜', 'cabinet', '/product')
-      this.item('肌肤检测', 'plan', '/skinstatus')
-    }.width('92%').height(64).padding({ left: 8, right: 8 }).borderRadius(32).margin({ bottom: 8 })
-      .backgroundColor(AISkinColor.elevated)
-      .border({ width: { top: 1 }, color: AISkinColor.border })
-  }
-  @Builder
-  item(label: string, icon: string, route: string) {
-    Button() {
-      Column({ space: 4 }) {
-        AISkinIcon({ name: icon, selected: this.currentRoute === route })
-        Text(label).fontSize(11).fontColor(this.currentRoute === route ? AISkinColor.accent : AISkinColor.secondary)
-      }.width('100%').height(52).justifyContent(FlexAlign.Center)
-    }.type(ButtonType.Normal).layoutWeight(1).height(56).borderRadius(20)
-      .backgroundColor(this.currentRoute === route ? AISkinColor.selected : Color.Transparent)
-      .accessibilityText(label).onClick(() => this.onNavigate?.(route))
+    AISkinTabBar({ items: this.items, selection: this.currentRoute, onSelect: this.onNavigate })
+      .width('100%').padding({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge })
+      .margin({ bottom: AISkinSpacing.xSmall })
   }
 }

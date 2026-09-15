@@ -1,0 +1,176 @@
+{
+  "capturedAt": "2026-09-15T02:50:34.345Z",
+  "phase": "restored",
+  "database": "aiskin_harmony_acceptance_20260914",
+  "owner": "6aa83874a04fc141fe906c19",
+  "originalActivePlanId": "6aa83f90a04fc141fe906c1a",
+  "restoredActivePlanId": "6aa83f90a04fc141fe906c1a",
+  "counts": {
+    "products": 5,
+    "skinanalyses": 2,
+    "plans": 2,
+    "conflicts": 1,
+    "dailyroutines": 2
+  },
+  "verifiedDocumentCount": 12,
+  "allContentAndIdsExactlyRestored": true,
+  "records": [
+    {
+      "collection": "products",
+      "id": "6aa83874ef25f4febe1a6f5c",
+      "originalHash": "2a97b0da7b1f2f19a49c018c9f06a6d296aab1e628ba1e2c63793d7da3bc7f7d",
+      "restoredHash": "2a97b0da7b1f2f19a49c018c9f06a6d296aab1e628ba1e2c63793d7da3bc7f7d",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "products",
+      "id": "6aa83874ef25f4febe1a6f5d",
+      "originalHash": "968790297df9fbc7c71550461e1035865ccc209c8e4080e2d3966371122dd2dd",
+      "restoredHash": "968790297df9fbc7c71550461e1035865ccc209c8e4080e2d3966371122dd2dd",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "products",
+      "id": "6aa83874ef25f4febe1a6f5e",
+      "originalHash": "8844a2dd8ec83170d7485d58c62dee78b47238ec1922c2fd438e43f06e6be7bc",
+      "restoredHash": "8844a2dd8ec83170d7485d58c62dee78b47238ec1922c2fd438e43f06e6be7bc",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "products",
+      "id": "6aa83874ef25f4febe1a6f5f",
+      "originalHash": "743397e8b95a56c85dd04b329675dc4be5fd3b40426cc5b5e84fcd4c6270ee1c",
+      "restoredHash": "743397e8b95a56c85dd04b329675dc4be5fd3b40426cc5b5e84fcd4c6270ee1c",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "products",
+      "id": "6aa83874ef25f4febe1a6f60",
+      "originalHash": "f7a23c33e8f57cbd42080acc30e2937197f53fc42459b33bfa3fdfd998731aff",
+      "restoredHash": "f7a23c33e8f57cbd42080acc30e2937197f53fc42459b33bfa3fdfd998731aff",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "skinanalyses",
+      "id": "6aa83874ef25f4febe1a6f61",
+      "originalHash": "d0a294b435de49759dc0b0123d3cc0aa03e83079902a3c4ea64cb81bfd922546",
+      "restoredHash": "d0a294b435de49759dc0b0123d3cc0aa03e83079902a3c4ea64cb81bfd922546",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "skinanalyses",
+      "id": "6aa83874ef25f4febe1a6f62",
+      "originalHash": "43cd04dda7ab42945709d00b49b3697b69f76b78498f58061da5346655fbc5a9",
+      "restoredHash": "43cd04dda7ab42945709d00b49b3697b69f76b78498f58061da5346655fbc5a9",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "plans",
+      "id": "6aa83874ef25f4febe1a6f64",
+      "originalHash": "7710d4ddb9cb8fb5093d1ff165a2674a017db79cadf4eb1d51c689d6b6b892fc",
+      "restoredHash": "7710d4ddb9cb8fb5093d1ff165a2674a017db79cadf4eb1d51c689d6b6b892fc",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "plans",
+      "id": "6aa83f90a04fc141fe906c1a",
+      "originalHash": "55f16cb61213906f38629a74dd85062f904e1b07c62dfd06f252e3fee2f25083",
+      "restoredHash": "55f16cb61213906f38629a74dd85062f904e1b07c62dfd06f252e3fee2f25083",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "conflicts",
+      "id": "6aa83874ef25f4febe1a6f63",
+      "originalHash": "d6b800d1e4adfa2abcbcb03383a310d8be1b0f1c1b10d9ff469a00983dbf3977",
+      "restoredHash": "d6b800d1e4adfa2abcbcb03383a310d8be1b0f1c1b10d9ff469a00983dbf3977",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "dailyroutines",
+      "id": "6aa8399ce3fa240235cfc952",
+      "originalHash": "11296cb5b3a5c2656627a94f59cc120c07db7363a28b561c2aac154a1d04f8c8",
+      "restoredHash": "11296cb5b3a5c2656627a94f59cc120c07db7363a28b561c2aac154a1d04f8c8",
+      "exactlyRestored": true
+    },
+    {
+      "collection": "dailyroutines",
+      "id": "6aa83fa2e3fa240235cfc953",
+      "originalHash": "07126a3a4c7d0570a71183d5d42524db7b84df3408026f39bac95229353e535b",
+      "restoredHash": "07126a3a4c7d0570a71183d5d42524db7b84df3408026f39bac95229353e535b",
+      "exactlyRestored": true
+    }
+  ],
+  "http": {
+    "active": {
+      "path": "/api/plans/active",
+      "status": 200,
+      "id": "6aa83f90a04fc141fe906c1a"
+    },
+    "products": {
+      "path": "/api/products?page=1&limit=20",
+      "status": 200,
+      "total": 5,
+      "returned": 5
+    },
+    "skin": {
+      "path": "/api/skin-analysis?page=1&limit=10",
+      "status": 200,
+      "total": 2,
+      "returned": 2
+    },
+    "plans": {
+      "path": "/api/plans",
+      "status": 200,
+      "count": 2
+    },
+    "conflicts": {
+      "path": "/api/conflicts",
+      "status": 200
+    },
+    "daily": {
+      "path": "/api/plans/6aa83f90a04fc141fe906c1a/daily?date=2026-09-15&timezone=America%2FChicago",
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "daily": {
+            "planId": "6aa83f90a04fc141fe906c1a",
+            "date": "2026-09-15",
+            "timezone": "America/Chicago",
+            "morning": [
+              {
+                "step": 1,
+                "completed": true
+              },
+              {
+                "step": 2,
+                "completed": false
+              },
+              {
+                "step": 3,
+                "completed": false
+              }
+            ],
+            "evening": [
+              {
+                "step": 1,
+                "completed": false
+              },
+              {
+                "step": 2,
+                "completed": false
+              },
+              {
+                "step": 3,
+                "completed": false
+              }
+            ],
+            "completedCount": 1,
+            "totalCount": 6
+          }
+        }
+      }
+    }
+  },
+  "credentialFieldsExported": false
+}

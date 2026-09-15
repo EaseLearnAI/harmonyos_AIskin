@@ -1,29 +1,26 @@
-import { AISkinColor } from '../../design/AISkinTheme'
-import { AISkinIcon } from '../../design/AISkinIcon'
+import { AISkinHeader, AISkinHeaderLayout } from '../../design/AISkinPrimitives'
 
+// Business facade only: the shared AISkinHeader owns every visual decision.
 @Component
 export struct AppHeader {
   @Prop title: string = ''
+  @Prop subtitle: string = ''
+  @Prop layout: AISkinHeaderLayout = AISkinHeaderLayout.Centered
   @Prop icon: string = ''
   @Prop rightIcon: string = ''
+  @Prop rightLabel: string = ''
+  @Prop rightAccessibilityLabel: string = ''
   @Prop showBackButton: boolean = false
-  @Prop bgColor: ResourceColor = ''
   onBack?: () => void
   onProfile?: () => void
+  onRight?: () => void
+  rightAction?: () => void
   build() {
-    Row({ space: 12 }) {
-      if (this.showBackButton) {
-        Button() { AISkinIcon({ name: 'back' }) }
-          .width(44).height(44).backgroundColor(AISkinColor.surface)
-          .accessibilityText('返回').onClick(() => this.onBack?.())
-      }
-      if (!this.showBackButton) {
-        Button() { AISkinIcon({ name: 'profile', iconSize: 20 }) }
-          .width(44).height(44).backgroundColor(AISkinColor.surface)
-          .accessibilityText('我的').onClick(() => this.onProfile?.())
-      }
-      Text(this.title).fontSize(20).fontWeight(FontWeight.Medium).fontColor(AISkinColor.text).layoutWeight(1).textAlign(TextAlign.Center)
-      Blank().width(44)
-    }.width('100%').padding({ left: 20, right: 20, top: 8, bottom: 8 })
+    AISkinHeader({ title: this.title, subtitle: this.subtitle, layout: this.layout,
+      leftIcon: this.showBackButton ? 'back' : (this.onProfile ? 'profile' : ''),
+      leftLabel: this.showBackButton ? '返回' : '我的',
+      onLeft: () => { if (this.showBackButton) this.onBack?.(); else this.onProfile?.() },
+      rightIcon: this.rightIcon, rightLabel: this.rightAccessibilityLabel || this.rightLabel,
+      onRight: () => { if (this.rightAction) this.rightAction(); else this.onRight?.() } })
   }
 }

@@ -13,6 +13,8 @@ export interface ImagePickerResult {
   message?: string
 }
 
+interface ImagePickerError { code?: number }
+
 /**
  * Image Picker Service
  * 处理图片选择(相册和摄像头)
@@ -102,12 +104,17 @@ export class ImagePickerService {
       }
     }
     
+    let capturePath: string = ''
+    let cleanupCapture: boolean = false
     try {
       console.log('📡 打开系统相机...')
 
       // 将系统相机拍摄结果直接写入应用缓存，不自动保存到系统相册。
-      const capturePath = `${context.cacheDir}/skin_capture_${Date.now()}.jpg`
-      fs.createRandomAccessFileSync(capturePath, fs.OpenMode.CREATE)
+      capturePath = `${context.cacheDir}/skin_capture_${Date.now()}.jpg`
+      const captureFile = fs.createRandomAccessFileSync(capturePath, fs.OpenMode.CREATE)
+      cleanupCapture = true
+      // Only create the destination here; the camera and uploader open it independently.
+      captureFile.close()
       const captureUri = fileUri.getUriFromPath(capturePath)
       const profile: cameraPicker.PickerProfile = {
         cameraPosition: camera.CameraPosition.CAMERA_POSITION_FRONT,
@@ -122,6 +129,8 @@ export class ImagePickerService {
 
       if (result.resultCode === 0 && result.resultUri) {
         console.log('✅ 拍照完成')
+        // The caller still needs this file for upload; only unsuccessful captures belong to this cleanup.
+        cleanupCapture = false
         return {
           success: true,
           filePath: capturePath,
@@ -129,16 +138,26 @@ export class ImagePickerService {
         }
       }
 
-      console.log('ℹ️ 用户取消拍照')
+      const resultCode = Number.isFinite(result.resultCode) ? String(result.resultCode) : 'unknown'
+      console.log(`ℹ️ 未完成拍照，resultCode=${resultCode}`)
       return {
         success: false,
         message: '未拍摄照片'
       }
     } catch (error) {
-      console.error('❌ 拍照失败')
+      const code = (error as ImagePickerError)?.code
+      console.error(`❌ 拍照失败，errorCode=${typeof code === 'number' && Number.isFinite(code) ? code : 'unknown'}`)
       return {
         success: false,
         message: '拍照失败，请重试'
+      }
+    } finally {
+      if (cleanupCapture) {
+        try { fs.unlinkSync(capturePath) }
+        catch (error) {
+          const code = (error as ImagePickerError)?.code
+          console.warn(`拍照临时文件清理失败，errorCode=${typeof code === 'number' && Number.isFinite(code) ? code : 'unknown'}`)
+        }
       }
     }
   }
