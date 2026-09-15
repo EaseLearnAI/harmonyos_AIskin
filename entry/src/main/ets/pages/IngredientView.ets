@@ -139,9 +139,9 @@ export struct IngredientView {
           List({ scroller: this.reportScroller, space: AISkinReportTokens.sectionGap }) {
             ListItem() {
               Column({ space: AISkinSpacing.small }) {
+                AIContentNotice({ scene: '产品成分' })
                 ProductInfo({ product: this.product })
                 AnalysisOverview({ analysis: this.analysis })
-                AIContentNotice({ scene: '产品成分' })
               }.width('100%')
             }
             ListItemGroup({ header: () => { this.ReportDirectory() }, space: AISkinReportTokens.sectionGap }) {

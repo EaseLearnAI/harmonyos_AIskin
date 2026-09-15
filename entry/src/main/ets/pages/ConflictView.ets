@@ -28,6 +28,7 @@ export struct ConflictView {
       Scroll() {
         Column({ space: AISkinReportTokens.sectionGap }) {
           if (this.conflictData) {
+            AIContentNotice({ scene: '冲突检测' })
             AISkinReportScore({ label: '搭配风险评分', score: this.conflictData.riskScore ?? -1,
               summary: this.conflictData.summary || '该次记录未提供总结', hint: '0–5 分，越高越需谨慎 · 基于成分标签的模型估计' })
             AISkinReportHeading({ number: '01', title: '本次检测产品', detail: `${this.conflictData.products?.length || 0} 件` })
@@ -68,7 +69,6 @@ export struct ConflictView {
               ForEach(this.conflictData.recommendations?.routines?.evening || [], (step: string) => { AISkinReportTextItem({ title: '晚间', text: step }) })
               if (!this.conflictData.recommendations?.advice?.length && !this.conflictData.recommendations?.routines && !this.conflictData.recommendations?.productPairings) { AISkinReportTextItem({ text: '这份记录未提供使用建议。' }) }
             }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Content, AISkinCardState.Normal, AISkinCardInset.Regular))
-            AIContentNotice({ scene: '冲突检测' })
           } else {
             AISkinStateView({ title: '未找到报告', message: '请返回后重新打开。', kind: AISkinStateKind.Error })
           }

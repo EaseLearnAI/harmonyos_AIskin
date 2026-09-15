@@ -1,0 +1,18 @@
+{
+  "hap_sha256": "",
+  "source_sha256": "",
+  "ai_file_export": false,
+  "checks": {
+    "safety_report": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "safety_platform_pass": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "ai_labels": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "ai_declaration": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "product_flow": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "skin_flow": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "mate60_full_report": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "pura80_contrast": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "matex5_dark_mode": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "production_login": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] },
+    "release_signature": { "status": "pending", "reviewed_by": "", "reviewed_at": "", "files": [] }
+  }
+}

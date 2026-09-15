@@ -229,6 +229,7 @@ export struct SkinStatusView {
             Column({ space: AISkinSpacing.sectionGap }) {
               if (this.loading) { AISkinStateView({ title: '正在读取检测记录', kind: AISkinStateKind.Loading }) }
               else if (this.result) {
+                AIContentNotice({ scene: '肌肤检测' })
                 AISkinSkinSummaryCard({ data: this.result })
                 Row({ space: AISkinSpacing.small }) {
                   AISkinButton({ title: '查看完整报告', variant: AISkinButtonVariant.Secondary, onAction: () => { this.setReport(true) } }).layoutWeight(1)

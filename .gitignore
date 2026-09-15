@@ -7,6 +7,8 @@ oh_modules/
 build/
 entry/build/
 doc/password/
+doc/release-private/
+__pycache__/
 *.p12
 *.p7b
 *.cer

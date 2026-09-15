@@ -31,9 +31,12 @@ HEX_LITERAL = re.compile(r"(['\"])#[0-9a-fA-F]{3,8}\1")
 # These exact values retain the previous Huawei contrast remediation. They are
 # explicitly reported, not counted as an iOS color match. Supporting review evidence
 # belongs in the release review matrix; new values or changed iOS references do not
-# inherit this exception. --strict-parity rejects all four differences.
+# inherit this exception. --strict-parity rejects all retained differences.
+# Accent/secondary were additionally checked against the composed gradient in
+# check-appgallery.py, including the foldable aspect ratio (2026-09-16).
 ACCESSIBILITY_DEVIATIONS = {
-    "aiskin_secondary": ("#544A5C", "#FF706878"),
+    "aiskin_accent": ("#5B3E73", "#FF6B4D86"),
+    "aiskin_secondary": ("#504658", "#FF706878"),
     "aiskin_danger": ("#B3261E", "#FFD42E33"),
     "aiskin_warning": ("#8A4B00", "#FFF0962E"),
     "aiskin_success": ("#2E7D32", "#FF339E6B"),
@@ -361,7 +364,7 @@ def main() -> int:
         for item in colors:
             if item["status"] != "match":
                 print(f"  {item['status']}: {item['color']}={item['harmony']} vs {item['ios_token']}={item['ios_quantized_argb']}")
-        print("  Four exact contrast-remediation colors are retained accessibility warnings; all other differences fail. Use --strict-parity to reject every deviation.")
+        print(f"  {accessibility_deviations} exact contrast-remediation colors are retained accessibility warnings; all other differences fail. Use --strict-parity to reject every deviation.")
         print("\nShared call sites (facades included; zero direct page calls can be intentional):")
         for name, item in coverage.items():
             print(f"  {name}: {item['calls']} calls across {item['files']} files")

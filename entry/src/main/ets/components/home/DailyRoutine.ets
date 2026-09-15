@@ -4,6 +4,7 @@ import { AISkinTextRole, AISkinTone, AISkinSpacing, AISkinButtonVariant, AISkinB
 import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
 import { AISkinIcon } from '../../design/AISkinIcon'
 import { PlanApiService, PlanData, PlanStep, DailyProgress } from '../plan/PlanApiService'
+import { AIContentNotice } from '../common/AIContentNotice'
 @Component
 export struct DailyRoutine {
   @Prop @Watch('load') plan: PlanData = {}
@@ -42,6 +43,7 @@ export struct DailyRoutine {
         Blank()
         AISkinButton({ title: '历史', icon: 'history', textRole: AISkinTextRole.Caption, variant: AISkinButtonVariant.Plain, layout: AISkinButtonLayout.Compact, onAction: this.onHistory })
       }.width('100%')
+      AIContentNotice({ scene: '每日护肤方案' })
       AISkinTabs({ items: ['早间','晚间'], icons: ['sun','moon'], selection: this.period === 'morning' ? 0 : 1, variant: AISkinTabVariant.Segmented, onSelect: (index: number) => { this.period = index === 0 ? 'morning' : 'evening' } })
       if (this.error) { AISkinStateView({ title: '保存未成功', message: this.error, kind: AISkinStateKind.Error, onRetry: () => { this.load() } }) }
       Column() {

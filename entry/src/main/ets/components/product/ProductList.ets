@@ -3,6 +3,7 @@ import { AISkinButton, AISkinIconButton, AISkinStateView, AISkinTabs } from '../
 import { AISkinButtonLayout, AISkinButtonVariant, AISkinCardInset, AISkinCardRole, AISkinCardState, AISkinLayout, AISkinSpacing, AISkinStateKind, AISkinTabVariant, AISkinTextRole, AISkinTone } from '../../design/Foundation/AISkinTokens'
 import { AISkinProductTokens } from '../../design/Foundation/AISkinProductTokens'
 import { AISkinProductRow } from '../../design/AISkinProductRow'
+import { AIContentNotice } from '../common/AIContentNotice'
 export const PRODUCT_CATEGORIES: CategoryItem[] = [
   { id: '洁面', name: '洁面' }, { id: '精华', name: '精华' }, { id: '面膜', name: '面膜' }, { id: '防晒', name: '防晒' },
   { id: '面霜', name: '面霜' }, { id: '爽肤水', name: '爽肤水' }, { id: '乳液', name: '乳液' }, { id: '眼霜', name: '眼霜' }, { id: '其他', name: '其他' }
@@ -45,6 +46,7 @@ export struct ProductList {
           }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Content, AISkinCardState.Normal, AISkinCardInset.Regular))
         } else {
           Column({ space: AISkinSpacing.small }) {
+            AIContentNotice({ scene: '产品分析摘要' })
             ForEach(this.getFilteredProducts(), (product: ProductItem) => { this.ProductCard(product) })
           }.width('100%')
         }
