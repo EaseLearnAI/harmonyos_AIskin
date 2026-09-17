@@ -65,7 +65,7 @@ export struct ProductView {
     return false
   }
 
-  openUpload(source: string = ''): void {
+  openUpload(source: string = 'camera'): void {
     this.uploadSource = source
     this.showUploadModal = true
     this.onOverlay?.(true)
@@ -95,7 +95,7 @@ export struct ProductView {
           AISkinStateView({ title: '正在整理护肤柜', kind: AISkinStateKind.Loading })
         } else if (this.products.length === 0) {
           Scroll() {
-            AddProduct({ onOpenUploadModal: (source?: string): void => { this.openUpload(source || '') } })
+            AddProduct({ onOpenUploadModal: (source?: string): void => { this.openUpload(source || 'camera') } })
               .padding({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge })
           }.width('100%').layoutWeight(1).scrollBar(BarState.Off).align(Alignment.Top)
         } else {

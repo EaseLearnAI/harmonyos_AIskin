@@ -149,10 +149,10 @@ def source_checks(root):
     for relative, (content, minimum) in notices.items():
         source = design.mask_comments((ets / relative).read_text())
         first = source.find('AIContentNotice({')
-        if source.count('AIContentNotice({') < minimum or first < 0 or source.find(content) < first:
-            errors.append(f'{relative}: AI notice must precede results, including summaries')
+        if source.count('AIContentNotice({') < minimum or first < 0 or source.find(content) > first:
+            errors.append(f'{relative}: AI notice must follow results, including summaries')
     notice = design.mask_comments((ets / 'design/AISkinAIGeneratedNotice.ets').read_text())
-    if "title: 'AI生成'" not in notice or '本内容由 AI 生成，仅供参考。' not in notice:
+    if '含 AI 生成的内容' not in notice:
         errors.append('shared explicit AI label missing')
     report = design.mask_comments((ets / 'design/AISkinReportComponents.ets').read_text())
     if re.search(r'\.(maxLines|textOverflow)\s*\(', report):

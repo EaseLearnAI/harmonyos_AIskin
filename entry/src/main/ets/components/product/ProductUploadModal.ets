@@ -17,7 +17,7 @@ export struct ProductUploadModal {
     this.isDestroyed = false
     this.registerBackHandler?.((): boolean => { this.handleClose(); return true })
     this.onOverlay?.(true)
-    if (this.initialSource) this.requestImageConsent(this.initialSource)
+    if (this.initialSource) this.handleSelectImage(this.initialSource)
   }
   aboutToDisappear() {
     this.isDestroyed = true
@@ -51,27 +51,6 @@ export struct ProductUploadModal {
   onClose?: () => void
   onProductAdded?: (productId: string) => void
 
-  build() {
-    if (this.showModal) {
-      if (this.isLoading || this.isExtracting || this.isAnalyzing) {
-        AISkinProcessingScreen({ title: '成分分析', message: '正在识别产品并整理成分报告', onCancel: (): void => { this.handleClose() } })
-      } else {
-        Modal({ show: true, title: '添加护肤产品', onClose: (): void => { this.handleClose() }, content: () => { this.UploadContent() }, footer: () => { this.UploadFooter() } })
-      }
-    }
-  }
-  @Builder
-  UploadContent() {
-    Column({ space: AISkinSpacing.medium }) {
-      if (this.modalError) { AISkinStateView({ title: '成分分析未完成', message: this.modalErrorMessage, kind: AISkinStateKind.Error, onRetry: (): void => { this.submitProduct() } }) }
-      AISkinStateView({ title: '拍一张，就能分析', message: '拍摄或上传清晰的产品成分表，查看主要功效与潜在风险。', kind: AISkinStateKind.Empty })
-      AISkinButton({ title: '拍照分析', onAction: (): void => { this.requestImageConsent('camera') } })
-      AISkinButton({ title: '从相册上传', variant: AISkinButtonVariant.Secondary, onAction: (): void => { this.requestImageConsent('library') } })
-    }.width('100%').padding(AISkinSpacing.screenEdge)
-  }
-  @Builder
-  UploadFooter() { Column() {} }
-
   canSubmit(): boolean {
     return this.selectedImage !== null
   }
@@ -92,13 +71,6 @@ export struct ProductUploadModal {
     }
   }
 
-  requestImageConsent(source: string = 'library'): void {
-    if (this.isDestroyed || this.isPicking || this.isLoading) return
-    AlertDialog.show({ title: '确认AI图片处理', message: '你选择的产品图片将上传至阿里云对象存储并交由通义千问模型识别成分、生成分析报告。图片和结果保存在账号中，可随产品或账号一并删除。请避免上传含个人信息的图片。',
-      primaryButton: { value: '取消', action: () => {} },
-      secondaryButton: { value: '同意并选择图片', action: () => { this.handleSelectImage(source) } } })
-  }
-
   async handleSelectImage(source: string = 'library') {
     if (this.isDestroyed || this.isPicking || this.isLoading) return
     const generation = ++this.generation
@@ -111,9 +83,8 @@ export struct ProductUploadModal {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext
       console.log(`📋 已获取应用上下文`)
       
-      // 从相册选择图片
-      console.log('📂 调用 ImagePickerService.selectFromGallery...')
-      const pickResult = source === 'camera' ? await this.imagePickerService.takePhoto(context) : await this.imagePickerService.selectFromGallery(context)
+      // 根据入口直接打开系统相机或相册
+      const pickResult = source === 'camera' ? await this.imagePickerService.takePhoto(context, false) : await this.imagePickerService.selectFromGallery(context)
       if (this.isDestroyed || generation !== this.generation) return
       this.isPicking = false
       
@@ -127,7 +98,12 @@ export struct ProductUploadModal {
         // 自动开始执行分析流程
         this.submitProduct()
       } else {
-        console.log(`ℹ️ 用户取消选择或选择失败: ${pickResult.message || '未知错误'}`)
+        if (pickResult.message === '未选择图片' || pickResult.message === '未拍摄照片') {
+          if (this.initialSource) this.handleClose()
+        } else {
+          this.modalError = true
+          this.modalErrorMessage = pickResult.message || '选择图片失败，请重试'
+        }
       }
     } catch (error) {
       if (this.isDestroyed || generation !== this.generation) return
@@ -259,6 +235,28 @@ export struct ProductUploadModal {
       analyze: '等待分析'
     }
   }
+  build() {
+    if (this.showModal) {
+      if (this.isLoading || this.isExtracting || this.isAnalyzing) {
+        AISkinProcessingScreen({ title: '成分分析', message: '正在识别产品并整理成分报告', onCancel: (): void => { this.handleClose() } })
+      } else if (!this.initialSource || this.modalError) {
+        Modal({ show: true, title: '添加护肤产品', onClose: (): void => { this.handleClose() }, content: () => { this.UploadContent() }, footer: () => { this.UploadFooter() } })
+      }
+    }
+  }
+  @Builder
+  UploadContent() {
+    Column({ space: AISkinSpacing.medium }) {
+      if (this.modalError) { AISkinStateView({ title: '成分分析未完成', message: this.modalErrorMessage, kind: AISkinStateKind.Error, onRetry: (): void => { if (this.canSubmit()) this.submitProduct(); else this.handleSelectImage(this.initialSource || 'camera') } }) }
+      AISkinStateView({ title: '拍一张，就能分析', message: '拍摄或上传清晰的产品成分表，查看主要功效与潜在风险。', kind: AISkinStateKind.Empty })
+      AISkinButton({ title: '拍照分析', onAction: (): void => { this.handleSelectImage('camera') } })
+      AISkinButton({ title: '从相册上传', variant: AISkinButtonVariant.Secondary, onAction: (): void => { this.handleSelectImage('library') } })
+    }.width('100%').padding(AISkinSpacing.screenEdge)
+  }
+  @Builder
+  UploadFooter() { Column() {} }
+
+
 }
 
 // Data Models

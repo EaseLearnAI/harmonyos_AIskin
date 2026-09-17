@@ -43,7 +43,6 @@ export struct DailyRoutine {
         Blank()
         AISkinButton({ title: '历史', icon: 'history', textRole: AISkinTextRole.Caption, variant: AISkinButtonVariant.Plain, layout: AISkinButtonLayout.Compact, onAction: this.onHistory })
       }.width('100%')
-      AIContentNotice({ scene: '每日护肤方案' })
       AISkinTabs({ items: ['早间','晚间'], icons: ['sun','moon'], selection: this.period === 'morning' ? 0 : 1, variant: AISkinTabVariant.Segmented, onSelect: (index: number) => { this.period = index === 0 ? 'morning' : 'evening' } })
       if (this.error) { AISkinStateView({ title: '保存未成功', message: this.error, kind: AISkinStateKind.Error, onRetry: () => { this.load() } }) }
       Column() {
@@ -56,6 +55,7 @@ export struct DailyRoutine {
       if (!((this.period === 'morning' ? this.plan.morning : this.plan.evening)?.length)) {
         AISkinStateView({ title: '暂无护理步骤', message: '可以在完整护肤方案中查看安排。' })
       }
+      AIContentNotice({ scene: '每日护肤方案' })
     }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Routine, AISkinCardState.Normal, AISkinCardInset.Regular))
   }
 }

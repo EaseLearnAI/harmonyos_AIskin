@@ -2,7 +2,7 @@
 
 `flow-regression.test.cjs` 包含 34 项检查：方案与年龄 16 项、肌肤报告竞态 12 项、首页加载与方案入口 6 项。它读取当前检出的 `.ets` 业务方法，使用受控 Promise 验证返回顺序、失败、取消、重复操作和页面销毁；不会访问服务端、账号、设备或相册，也不会改写业务源码。
 
-`image-picker-regression.test.cjs` 包含 8 项拍照临时资源检查，`auth-session-regression.test.cjs` 包含 19 项安全会话检查；三个文件合计 61 项。
+`image-picker-regression.test.cjs` 包含 10 项拍照临时资源及前后摄像头检查。`direct-capture-regression.test.cjs` 包含 6 项直接拍照/相册入口检查，覆盖确认后自动提交、取消、错误、重复点击与离页迟到结果。相机、文件和上传均使用内存桩，不能代替真机验收。
 
 ## 运行
 

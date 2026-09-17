@@ -46,8 +46,8 @@ export struct ProductList {
           }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Content, AISkinCardState.Normal, AISkinCardInset.Regular))
         } else {
           Column({ space: AISkinSpacing.small }) {
-            AIContentNotice({ scene: '产品分析摘要' })
             ForEach(this.getFilteredProducts(), (product: ProductItem) => { this.ProductCard(product) })
+            AIContentNotice({ scene: '产品分析摘要' })
           }.width('100%')
         }
       }.width('100%').padding({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge, top: AISkinSpacing.xxSmall, bottom: AISkinSpacing.xxLarge })

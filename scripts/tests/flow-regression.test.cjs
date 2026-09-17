@@ -10,7 +10,7 @@ const instantiatePlan = extractBusinessComponent(
 const instantiateSkin = extractBusinessComponent(
     'entry/src/main/ets/pages/SkinStatusView.ets', 'SkinStatusView',
     ['aboutToDisappear', 'load', 'remove', 'editContext', 'saveContext',
-        'closeContext', 'select', 'handleBack', 'deleteRecord', 'consent']
+        'closeContext', 'select', 'handleBack', 'deleteRecord', 'analyze']
 );
 const instantiateHome = extractBusinessComponent(
     'entry/src/main/ets/pages/HomeView.ets', 'HomeView',
@@ -312,7 +312,7 @@ test('skin race: deletion guards actions and back, emits overlay state, and clea
     f.view.select(f.records[1]);
     f.view.editContext();
     f.view.deleteRecord();
-    f.view.consent('camera');
+    await f.view.analyze('camera');
     await f.view.remove('A');
     assert.equal(f.view.handleBack(), true);
     assert.equal(f.view.result._id, 'A');

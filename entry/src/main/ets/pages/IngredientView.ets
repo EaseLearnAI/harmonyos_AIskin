@@ -139,7 +139,6 @@ export struct IngredientView {
           List({ scroller: this.reportScroller, space: AISkinReportTokens.sectionGap }) {
             ListItem() {
               Column({ space: AISkinSpacing.small }) {
-                AIContentNotice({ scene: '产品成分' })
                 ProductInfo({ product: this.product })
                 AnalysisOverview({ analysis: this.analysis })
               }.width('100%')
@@ -152,6 +151,7 @@ export struct IngredientView {
               ListItem() {
                 AISkinButton({ title: '和其他产品检查搭配', variant: AISkinButtonVariant.Secondary, onAction: (): void => { this.onNavigateToConflictSelection?.(this.productId) } })
               }
+              ListItem() { AIContentNotice({ scene: '产品成分' }) }
               ListItem() { AISkinButton({ title: '评分与风险说明', variant: AISkinButtonVariant.Plain, onAction: (): void => { this.showScoreDetails() } }) }
             }
           }.width('100%').layoutWeight(1).padding({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge, bottom: AISkinSpacing.large }).scrollBar(BarState.Off).sticky(StickyStyle.Header)

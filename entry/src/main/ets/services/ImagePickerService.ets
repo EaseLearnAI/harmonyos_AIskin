@@ -94,7 +94,7 @@ export class ImagePickerService {
    * @param context 应用上下文(必需)
    * @returns Promise<ImagePickerResult>
    */
-  async takePhoto(context: common.UIAbilityContext): Promise<ImagePickerResult> {
+  async takePhoto(context: common.UIAbilityContext, useFrontCamera: boolean = true): Promise<ImagePickerResult> {
     console.log('===== 📷 使用摄像头拍照 =====')
     
     if (!context) {
@@ -117,7 +117,7 @@ export class ImagePickerService {
       captureFile.close()
       const captureUri = fileUri.getUriFromPath(capturePath)
       const profile: cameraPicker.PickerProfile = {
-        cameraPosition: camera.CameraPosition.CAMERA_POSITION_FRONT,
+        cameraPosition: useFrontCamera ? camera.CameraPosition.CAMERA_POSITION_FRONT : camera.CameraPosition.CAMERA_POSITION_BACK,
         saveUri: captureUri
       }
 

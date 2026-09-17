@@ -9,7 +9,7 @@ import { AISkinSpacing, AISkinLayout, AISkinTextRole, AISkinTone, AISkinButtonVa
 import { SkinDetectionWelcome } from '../components/skin-analysis/SkinDetectionWelcome'
 import { AIContentNotice } from '../components/common/AIContentNotice'
 import { Modal, AISkinModalPresentation } from '../components/common/Modal'
-import { SkinAnalysisService } from '../services/SkinAnalysisService'
+import { SkinAnalysisService, SkinAnalysisResponse } from '../services/SkinAnalysisService'
 import { SkinAnalysisData, SkinAnalysisApiService, SkinContext } from '../services/SkinAnalysisApiService'
 @Component
 export struct SkinStatusView {
@@ -24,6 +24,7 @@ export struct SkinStatusView {
   @State showReport: boolean = false
   @State showHistory: boolean = false
   @State analyzing: boolean = false
+  @State capturing: boolean = false
   @State section: number = 0
   @State contextEditing: boolean = false
   @State contextSaving: boolean = false
@@ -45,7 +46,7 @@ export struct SkinStatusView {
   onReportVisibility?: (visible: boolean) => void
   aboutToAppear() { this.isDestroyed = false; this.registerBackHandler?.(() => this.handleBack()); this.showHistory = this.openHistory; if (this.initialReport) { this.result = this.initialReport; this.setReport(true) }; this.load() }
   aboutToDisappear() { this.isDestroyed = true; this.generation++; this.historyGeneration++; this.registerBackHandler?.(() => false); this.onReportVisibility?.(false) }
-  private isBusy(): boolean { return this.isDestroyed || this.deleting || this.contextSaving }
+  private isBusy(): boolean { return this.isDestroyed || this.capturing || this.deleting || this.contextSaving }
   private isCurrent(generation: number): boolean { return !this.isDestroyed && generation === this.generation }
   private invalidateHistoryLoad(): void { this.historyGeneration++; this.loading = false }
   private handleBack(): boolean {
@@ -81,24 +82,27 @@ export struct SkinStatusView {
     if (this.isBusy() || this.analyzing || this.contextEditing) return
     this.result = data; this.showHistory = false; this.error = ''; this.setReport(true)
   }
-  private consent(source: string): void {
-    if (this.isBusy() || this.analyzing || this.contextEditing) return
-    AlertDialog.show({ title: '确认AI图片处理',
-      message: '你选择的面部照片会加密上传至阿里云私有对象存储，并通过短期签名链接交由通义千问视觉模型分析。照片和报告保存在你的账号中，供回看检测记录；删除记录或注销账号时会一并删除。不用于身份识别、广告或模型训练。结果仅供日常护肤参考，不构成医疗诊断。',
-      primaryButton: { value: '取消', action: () => {} }, secondaryButton: { value: '同意并继续', action: () => { this.analyze(source) } } })
-  }
   private async analyze(source: string): Promise<void> {
     if (this.isBusy() || this.analyzing || this.contextEditing) return
     const context = this.getUIContext().getHostContext() as common.UIAbilityContext
     const generation = ++this.generation
     this.invalidateHistoryLoad()
     this.error = ''
-    const callback = (progress: number, status: string): void => { if (this.isCurrent(generation) && progress >= 20) { this.analyzing = true; this.onReportVisibility?.(true) } }
-    const response = source === 'gallery' ? await this.service.analyzeFromGallery(context,callback) : await this.service.analyzeFromCamera(context,callback)
+    const callback = (progress: number, status: string): void => { if (this.isCurrent(generation) && progress >= 20) { this.capturing = false; this.analyzing = true; this.onReportVisibility?.(true) } }
+    this.capturing = true
+    let response: SkinAnalysisResponse
+    try {
+      response = source === 'gallery' ? await this.service.analyzeFromGallery(context,callback) : await this.service.analyzeFromCamera(context,callback)
+    } catch (error) {
+      if (this.isCurrent(generation)) { this.analyzing = false; this.error = '分析失败，请重试'; this.onReportVisibility?.(this.showReport) }
+      return
+    } finally {
+      if (this.isCurrent(generation)) this.capturing = false
+    }
     if (!this.isCurrent(generation)) return
     this.analyzing = false
     if (response.success && response.data) { this.result = response.data; this.setReport(true); await this.load() }
-    else { this.onReportVisibility?.(this.showReport); this.error = response.message?.includes('取消') || response.message === '未选择图片' ? '' : response.message || '分析失败，请重试' }
+    else { this.onReportVisibility?.(this.showReport); this.error = response.message?.includes('取消') || response.message === '未选择图片' || response.message === '未拍摄照片' ? '' : response.message || '分析失败，请重试' }
   }
   private deleteRecord(): void {
     if (!this.result || this.isBusy() || this.analyzing || this.contextEditing) return
@@ -200,7 +204,6 @@ export struct SkinStatusView {
           List({ scroller: this.reportScroller, space: AISkinSpacing.sectionGap }) {
             ListItem() {
               Column({ space: AISkinSpacing.small }) {
-                AIContentNotice({ scene: '肌肤检测' })
                 Text('01  肌肤问题').attributeModifier(new TextStyle(AISkinTextRole.SectionTitle)).width('100%')
                 AISkinSkinPhotoMap({ imageUrl: this.result.imageUrl || '', observations: skinObservations(this.result) })
               }
@@ -222,6 +225,7 @@ export struct SkinStatusView {
               AISkinButton({ title: '补充拍摄状态', variant: AISkinButtonVariant.Secondary, onAction: () => { this.editContext() } })
               AISkinButton({ title: '删除检测记录', variant: AISkinButtonVariant.Destructive, isLoading: this.deleting, onAction: () => { this.deleteRecord() } })
             }.attributeModifier(new CardStyle(AISkinCardRole.Content,AISkinCardState.Normal,AISkinCardInset.Regular)) }
+            ListItem() { AIContentNotice({ scene: '肌肤检测' }) }
           }.layoutWeight(1).width('100%').padding({ left: AISkinSpacing.screenEdge,right: AISkinSpacing.screenEdge,top: AISkinSpacing.small,bottom: AISkinSpacing.xLarge }).scrollBar(BarState.Off)
             .onScrollIndex((first: number) => { this.section = Math.min(3,first) })
     } else {
@@ -229,19 +233,19 @@ export struct SkinStatusView {
             Column({ space: AISkinSpacing.sectionGap }) {
               if (this.loading) { AISkinStateView({ title: '正在读取检测记录', kind: AISkinStateKind.Loading }) }
               else if (this.result) {
-                AIContentNotice({ scene: '肌肤检测' })
                 AISkinSkinSummaryCard({ data: this.result })
                 Row({ space: AISkinSpacing.small }) {
                   AISkinButton({ title: '查看完整报告', variant: AISkinButtonVariant.Secondary, onAction: () => { this.setReport(true) } }).layoutWeight(1)
-                  AISkinButton({ title: '重新检测', onAction: () => { this.consent('camera') } }).layoutWeight(1)
+                  AISkinButton({ title: '重新检测', onAction: () => { this.analyze('camera') } }).layoutWeight(1)
                 }
                 Column({ space: AISkinSpacing.small }) {
                   Text('定制护肤方案').attributeModifier(new TextStyle(AISkinTextRole.CardTitle))
                   Text('根据本次肤况，结合护肤柜里的产品安排早晚护肤。').attributeModifier(new TextStyle(AISkinTextRole.ReportBody,AISkinTone.Secondary))
                   AISkinButton({ title: '定制护肤方案', onAction: this.onCreatePlan })
                 }.attributeModifier(new CardStyle(AISkinCardRole.Action,AISkinCardState.Normal,AISkinCardInset.Regular))
+                AIContentNotice({ scene: '肌肤检测' })
                 AISkinButton({ title: '检测历史', variant: AISkinButtonVariant.Plain, onAction: () => { this.showHistory = true } })
-              } else if (!this.historyError) { SkinDetectionWelcome({ onTakePhoto: () => { this.consent('camera') }, onSelectPhoto: () => { this.consent('gallery') } }) }
+              } else if (!this.historyError) { SkinDetectionWelcome({ onTakePhoto: () => { this.analyze('camera') }, onSelectPhoto: () => { this.analyze('gallery') } }) }
               if (this.historyError) { AISkinStateView({ title: '检测历史加载失败', message: this.historyError, kind: AISkinStateKind.Error, onRetry: () => { this.load() } }) }
               if (this.error) { AISkinStateView({ title: '暂时无法完成', message: this.error, kind: AISkinStateKind.Error }) }
             }.width('100%').padding({ left: AISkinSpacing.screenEdge,right: AISkinSpacing.screenEdge,top: AISkinSpacing.medium,bottom: AISkinLayout.bottomClearance })
@@ -255,7 +259,7 @@ export struct SkinStatusView {
   @Builder
   reportActions() {
           Row({ space: AISkinSpacing.small }) {
-            AISkinButton({ title: '重新检测', variant: AISkinButtonVariant.Secondary, onAction: () => { this.setReport(false); this.consent('camera') } }).layoutWeight(1)
+            AISkinButton({ title: '重新检测', variant: AISkinButtonVariant.Secondary, onAction: () => { this.setReport(false); this.analyze('camera') } }).layoutWeight(1)
             AISkinButton({ title: '定制护肤方案', onAction: this.onCreatePlan }).layoutWeight(1)
           }
   }

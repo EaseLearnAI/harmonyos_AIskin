@@ -33,7 +33,7 @@ function fixture() {
       unlinkSync: path => { f.events.push(['unlink', path]); f.unlink(path); }
     },
     fileUri: { getUriFromPath: path => { f.events.push(['uri', path]); return f.uri(path); } },
-    camera: { CameraPosition: { CAMERA_POSITION_FRONT: 1 } },
+    camera: { CameraPosition: { CAMERA_POSITION_FRONT: 1, CAMERA_POSITION_BACK: 0 } },
     cameraPicker: {
       PickerMediaType: { PHOTO: 1 },
       pick: async (context, types, profile) => {
@@ -144,3 +144,14 @@ test('camera cache: absent context creates no file and makes no camera request',
   assert.equal(f.events.length, 0);
   assert.equal(f.picks, 0);
 });
+
+for (const [front, expected] of [[undefined, 1], [false, 0]]) {
+  test(`camera selection: ${front === false ? 'product uses rear' : 'skin defaults to front'}`, async () => {
+    const f = fixture();
+    f.pick = async (_context, _types, profile) => {
+      assert.equal(profile.cameraPosition, expected);
+      return f.captureResult;
+    };
+    assert.equal((await f.service.takePhoto(f.context, front)).success, true);
+  });
+}
