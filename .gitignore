@@ -1,0 +1,17 @@
+.DS_Store
+local.properties
+node_modules/
+oh_modules/
+.hvigor/
+.idea/
+build/
+entry/build/
+doc/password/
+doc/release-private/
+__pycache__/
+*.p12
+*.p7b
+*.cer
+*.csr
+*.pem
+*.key

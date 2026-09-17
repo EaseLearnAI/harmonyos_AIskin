@@ -1,0 +1,31 @@
+{
+  "build": "preview build10 with disposable login prefill in build copy only",
+  "coldStart": {
+    "oldPid": 6218,
+    "newPid": 6258,
+    "withoutLoginInteraction": true,
+    "screen": "harmony/session-cold-restored.jpeg"
+  },
+  "meRequests": [
+    {
+      "timestamp": "2026-09-15T03:02:39.751Z",
+      "method": "GET",
+      "path": "/me",
+      "statusCode": 200,
+      "requestId": "0d08d338-e975-4367-815a-7c17bf0856fc"
+    },
+    {
+      "timestamp": "2026-09-15T03:03:13.813Z",
+      "method": "GET",
+      "path": "/me",
+      "statusCode": 200,
+      "requestId": "9896dded-28c7-415c-b085-9cf32942eb72"
+    }
+  ],
+  "offlineColdStartRetainsSession": true,
+  "signOutThenColdStartReturnsOnboarding": true,
+  "offlineForwardRestored": true,
+  "systemAppearanceRestored": "light",
+  "actualExpiredToken401NativeTest": false,
+  "expiredToken401CoveredBy": "auth-session-regression.test.cjs controlled HTTP responses"
+}

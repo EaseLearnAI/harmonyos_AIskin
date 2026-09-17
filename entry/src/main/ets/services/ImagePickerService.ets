@@ -1,6 +1,7 @@
 import picker from '@ohos.file.picker'
-import fs from '@ohos.file.fs'
 import { common } from '@kit.AbilityKit'
+import { camera, cameraPicker } from '@kit.CameraKit'
+import { fileIo as fs, fileUri } from '@kit.CoreFileKit'
 
 /**
  * 图片选择结果
@@ -11,6 +12,8 @@ export interface ImagePickerResult {
   uri?: string
   message?: string
 }
+
+interface ImagePickerError { code?: number }
 
 /**
  * Image Picker Service
@@ -52,13 +55,13 @@ export class ImagePickerService {
       
       if (selectResult && selectResult.photoUris && selectResult.photoUris.length > 0) {
         const photoUri = selectResult.photoUris[0]
-        console.log(`✅ 已选择图片: ${photoUri}`)
+        console.log('✅ 已选择图片')
         
         // 将图片复制到应用沙箱
         const sandboxPath = await this.copyToSandbox(photoUri, context)
         
         if (sandboxPath) {
-          console.log(`📁 图片已复制到沙箱: ${sandboxPath}`)
+          console.log('✅ 图片已复制到应用缓存')
           return {
             success: true,
             filePath: sandboxPath,
@@ -78,10 +81,10 @@ export class ImagePickerService {
         }
       }
     } catch (error) {
-      console.error('❌ 选择图片失败:', JSON.stringify(error))
+      console.error('❌ 选择图片失败')
       return {
         success: false,
-        message: `选择图片失败: ${error}`
+        message: '选择图片失败，请重试'
       }
     }
   }
@@ -91,7 +94,7 @@ export class ImagePickerService {
    * @param context 应用上下文(必需)
    * @returns Promise<ImagePickerResult>
    */
-  async takePhoto(context: common.UIAbilityContext): Promise<ImagePickerResult> {
+  async takePhoto(context: common.UIAbilityContext, useFrontCamera: boolean = true): Promise<ImagePickerResult> {
     console.log('===== 📷 使用摄像头拍照 =====')
     
     if (!context) {
@@ -101,24 +104,60 @@ export class ImagePickerService {
       }
     }
     
+    let capturePath: string = ''
+    let cleanupCapture: boolean = false
     try {
-      // 注意: CameraPicker API在当前HarmonyOS版本中可能不可用
-      // 根据文档,CameraPicker需要从@ohos.file.picker导入,但实际API可能不同
-      // 这里暂时返回提示,建议使用相册选择功能
-      // TODO: 实现正确的相机API调用
-      // 需要使用@kit.CameraKit中的CameraManager和CameraSession来实现自定义相机
-      // 或者等待HarmonyOS提供CameraPicker API的正式支持
       console.log('📡 打开系统相机...')
-      console.log('⚠️ 相机功能暂未实现,请使用相册选择功能')
+
+      // 将系统相机拍摄结果直接写入应用缓存，不自动保存到系统相册。
+      capturePath = `${context.cacheDir}/skin_capture_${Date.now()}.jpg`
+      const captureFile = fs.createRandomAccessFileSync(capturePath, fs.OpenMode.CREATE)
+      cleanupCapture = true
+      // Only create the destination here; the camera and uploader open it independently.
+      captureFile.close()
+      const captureUri = fileUri.getUriFromPath(capturePath)
+      const profile: cameraPicker.PickerProfile = {
+        cameraPosition: useFrontCamera ? camera.CameraPosition.CAMERA_POSITION_FRONT : camera.CameraPosition.CAMERA_POSITION_BACK,
+        saveUri: captureUri
+      }
+
+      const result = await cameraPicker.pick(
+        context,
+        [cameraPicker.PickerMediaType.PHOTO],
+        profile
+      )
+
+      if (result.resultCode === 0 && result.resultUri) {
+        console.log('✅ 拍照完成')
+        // The caller still needs this file for upload; only unsuccessful captures belong to this cleanup.
+        cleanupCapture = false
+        return {
+          success: true,
+          filePath: capturePath,
+          uri: result.resultUri
+        }
+      }
+
+      const resultCode = Number.isFinite(result.resultCode) ? String(result.resultCode) : 'unknown'
+      console.log(`ℹ️ 未完成拍照，resultCode=${resultCode}`)
       return {
         success: false,
-        message: '相机功能需要更新API实现,请使用相册选择功能'
+        message: '未拍摄照片'
       }
     } catch (error) {
-      console.error('❌ 拍照失败:', JSON.stringify(error))
+      const code = (error as ImagePickerError)?.code
+      console.error(`❌ 拍照失败，errorCode=${typeof code === 'number' && Number.isFinite(code) ? code : 'unknown'}`)
       return {
         success: false,
-        message: `拍照失败: ${error}`
+        message: '拍照失败，请重试'
+      }
+    } finally {
+      if (cleanupCapture) {
+        try { fs.unlinkSync(capturePath) }
+        catch (error) {
+          const code = (error as ImagePickerError)?.code
+          console.warn(`拍照临时文件清理失败，errorCode=${typeof code === 'number' && Number.isFinite(code) ? code : 'unknown'}`)
+        }
       }
     }
   }
@@ -142,8 +181,6 @@ export class ImagePickerService {
       const fileName = `skin_analysis_${timestamp}.jpg`
       const sandboxPath = `${appContext.cacheDir}/${fileName}`
 
-      console.log(`📋 复制文件: ${uri} -> ${sandboxPath}`)
-
       // 方法1: 尝试直接使用fs.openSync(最简单的方法)
       // 注意: PhotoViewPicker返回的URI可能可以直接通过fs访问
       try {
@@ -159,8 +196,8 @@ export class ImagePickerService {
         
         console.log(`✅ 文件复制成功(使用copyFileSync)`)
         return sandboxPath
-      } catch (copyError) {
-        console.log(`⚠️ copyFileSync失败: ${JSON.stringify(copyError)}`)
+      } catch (_copyError) {
+        console.log('⚠️ 直接复制失败，尝试分块复制')
         
         // 方法3: 手动读取和写入(备用方法)
         try {
@@ -206,17 +243,14 @@ export class ImagePickerService {
           
           console.log(`✅ 文件复制成功(手动复制),共${totalRead}字节`)
           return sandboxPath
-        } catch (readWriteError) {
-          console.error(`❌ 手动复制也失败: ${JSON.stringify(readWriteError)}`)
-          // ArkTS要求throw必须抛出Error类型
-          const errorMsg = readWriteError instanceof Error ? readWriteError.message : JSON.stringify(readWriteError)
-          throw new Error(`文件复制失败: ${errorMsg}`)
+        } catch (_readWriteError) {
+          console.error('❌ 分块复制失败')
+          throw new Error('文件复制失败')
         }
       }
     } catch (error) {
-      console.error('❌ 复制文件失败:', JSON.stringify(error))
+      console.error('❌ 复制文件失败')
       return null
     }
   }
 }
-

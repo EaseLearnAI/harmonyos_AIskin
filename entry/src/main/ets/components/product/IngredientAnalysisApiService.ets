@@ -68,14 +68,12 @@ export class IngredientAnalysisApiService {
    */
   private getAuthHeaders(): Record<string, string> {
     const token = this.authService.getToken()
-    console.log(`🔑 获取Token: ${token ? '已找到' : '未找到'}`)
     if (!token) {
       console.warn('⚠️ Token为空，请求将不带认证头')
       return {}
     }
     const headers: Record<string, string> = {} as Record<string, string>
     headers['Authorization'] = `Bearer ${token}`
-    console.log(`📦 认证头: Authorization: Bearer ${token.substring(0, 20)}...`)
     return headers
   }
 
@@ -84,7 +82,6 @@ export class IngredientAnalysisApiService {
    */
   async analyzeIngredients(productId: string): Promise<IngredientAnalysisApiResponse<IngredientAnalysisResponseData>> {
     console.log('===== 🧪 步骤4: 分析产品成分 =====')
-    console.log(`🆔 产品ID: ${productId}`)
 
     const headers = this.getAuthHeaders()
     const emptyBody: Record<string, string> = {} as Record<string, string>
@@ -95,14 +92,7 @@ export class IngredientAnalysisApiService {
     )
 
     if (response.success && response.data) {
-      const analysis = response.data.ingredientAnalysis
       console.log(`✅ 成分分析成功！`)
-      if (analysis) {
-        console.log(`📋 安全性指数: ${analysis.safetyIndex || 0}`)
-        console.log(`📋 功效评分: ${analysis.efficacyScore || 0}`)
-        console.log(`📋 活性成分数: ${analysis.activeIngredients || 0}`)
-        console.log(`📋 整体评级: ${analysis.overallRating || 0}/5.0`)
-      }
       return {
         success: true,
         data: response.data
@@ -121,7 +111,6 @@ export class IngredientAnalysisApiService {
    */
   async getIngredientAnalysis(productId: string): Promise<IngredientAnalysisApiResponse<IngredientAnalysisResponseData>> {
     console.log('===== 🔍 获取成分分析结果 =====')
-    console.log(`🆔 产品ID: ${productId}`)
 
     const headers = this.getAuthHeaders()
     const response = await this.httpService.get<IngredientAnalysisResponseData>(
@@ -131,12 +120,6 @@ export class IngredientAnalysisApiService {
 
     if (response.success && response.data) {
       console.log('✅ 获取成分分析成功')
-      const analysis = response.data.ingredientAnalysis
-      if (analysis) {
-        console.log(`📋 安全性指数: ${analysis.safetyIndex || 0}`)
-        console.log(`📋 功效评分: ${analysis.efficacyScore || 0}`)
-        console.log(`📋 整体评级: ${analysis.overallRating || 0}/5.0`)
-      }
       return {
         success: true,
         data: response.data
@@ -150,4 +133,3 @@ export class IngredientAnalysisApiService {
     }
   }
 }
-

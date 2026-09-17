@@ -84,8 +84,6 @@ export class FileService {
    */
   private async readFileAsArrayBuffer(filePath: string): Promise<ArrayBuffer> {
     try {
-      console.log(`📁 读取文件: ${filePath}`)
-      
       // 检查是否是URI格式
       if (filePath.startsWith('file://')) {
         console.log('📋 检测到URI格式，尝试直接读取')
@@ -104,7 +102,7 @@ export class FileService {
       console.log(`✅ 文件读取成功`)
       return buffer
     } catch (error) {
-      console.error('❌ 读取文件失败:', JSON.stringify(error))
+      console.error('❌ 读取文件失败')
       // 如果是权限错误，提供更详细的错误信息
       const errorObj = error as FileError
       if (errorObj.code === 13900002) {
@@ -121,9 +119,6 @@ export class FileService {
    */
   async uploadFile(options: FileUploadOptions): Promise<FileUploadResponse> {
     console.log('===== 📤 开始文件上传 =====')
-    console.log(`📁 文件路径: ${options.filePath}`)
-    console.log(`📋 字段名: ${options.fieldName || 'file'}`)
-    console.log(`📝 文件名: ${options.fileName || 'unknown'}`)
 
     try {
       // 读取文件
@@ -156,10 +151,7 @@ export class FileService {
       // 构建multipart/form-data请求体
       // 注意: HarmonyOS的http模块需要特殊处理multipart/form-data
       const url = ApiConfig.getApiUrl('/skin-analysis/analyze')
-      
-      console.log(`🔗 上传URL: ${url}`)
       console.log(`📦 请求方法: POST`)
-      console.log(`📋 请求头: ${JSON.stringify(headers)}`)
 
       // HarmonyOS的http模块不支持files字 段
       // 需要使用extraData构建multipart/form-data格式
@@ -180,6 +172,10 @@ export class FileService {
       
       // 添加文件内容
       formDataParts.push(new Uint8Array(fileBuffer))
+
+      // 面部图片属于敏感信息，服务端仅在收到本次明确同意后处理。
+      const consentField = `\r\n--${boundary}\r\nContent-Disposition: form-data; name="processingConsent"\r\n\r\ntrue`
+      formDataParts.push(this.stringToUint8Array(consentField))
       
       // 添加结束边界
       const footer = `\r\n--${boundary}--\r\n`
@@ -230,9 +226,8 @@ export class FileService {
       try {
         const responseBody = response.result.toString()
         responseData = JSON.parse(responseBody) as ApiResponse
-        console.log(`📦 响应数据: ${JSON.stringify(responseData)}`)
       } catch (parseError) {
-        console.error('❌ 解析响应失败:', JSON.stringify(parseError))
+        console.error('❌ 解析响应失败')
         return {
           success: false,
           message: '服务器响应格式错误'
@@ -261,10 +256,10 @@ export class FileService {
         }
       }
     } catch (error) {
-      console.error('❌ 文件上传异常:', JSON.stringify(error))
+      console.error('❌ 文件上传异常')
       return {
         success: false,
-        message: `上传失败: ${error}`
+        message: '上传失败，请重试'
       }
     }
   }
@@ -290,4 +285,3 @@ export class FileService {
     this.httpRequest.destroy()
   }
 }
-

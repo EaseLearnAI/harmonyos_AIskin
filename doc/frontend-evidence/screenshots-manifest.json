@@ -1,0 +1,310 @@
+{
+  "createdAt": "2026-09-15T03:15:19.717858+00:00",
+  "images": [
+    {
+      "path": "harmony/cabinet-current-dark.jpeg",
+      "bytes": 249703,
+      "sha256": "a8b6e1c3a502822ccdf664be3432b41c7374ef56eec24cef9bfc24f5e992e801"
+    },
+    {
+      "path": "harmony/cabinet-current-light.jpeg",
+      "bytes": 245995,
+      "sha256": "0e2713462a0f68e15c5cdee2b9532c5d83846e63559ee7fd45b569029c509072"
+    },
+    {
+      "path": "harmony/cabinet-edit-current.jpeg",
+      "bytes": 167012,
+      "sha256": "02033e030e7ba6ceef11b44761051b6ea5f047a082c2a66f952ad77a98c451d2"
+    },
+    {
+      "path": "harmony/cabinet-empty-dark.jpeg",
+      "bytes": 134850,
+      "sha256": "30755bc6dd47ae394d85295229f42759a26ae399d5e355f1b27290d61a78d996"
+    },
+    {
+      "path": "harmony/cabinet-empty-light.jpeg",
+      "bytes": 137433,
+      "sha256": "7693f321f01fcf80bef068769a760268c39c2ed69c704b907b19a1535ce61c96"
+    },
+    {
+      "path": "harmony/cabinet-menu-final.jpeg",
+      "bytes": 250015,
+      "sha256": "74febe98b6a64a53db6b3049a474751458c257840629f1a3193aa000bfd71021"
+    },
+    {
+      "path": "harmony/cabinet-reuse-probe.jpeg",
+      "bytes": 249683,
+      "sha256": "c930b9e189b9234ead9f89ec629a6cf8d5c5f2c9ee7ded55e3fce8a71eca3552"
+    },
+    {
+      "path": "harmony/camera-unavailable-error.jpeg",
+      "bytes": 152464,
+      "sha256": "4a78672816e85bd2ad0bb519b14efdf609184909be9ab1afae589226e568b7d7"
+    },
+    {
+      "path": "harmony/conflict-current-dark.jpeg",
+      "bytes": 194431,
+      "sha256": "a2c46e30e2836cb699b3c02bb0b6ae031ff6518ec8c7213790af3ce0cce4cf88"
+    },
+    {
+      "path": "harmony/conflict-two-selected-fixed.jpeg",
+      "bytes": 241573,
+      "sha256": "7fdab0470b8d3d373795b0466bc58fc80a8759ad9cafc973d449ccacf579eb15"
+    },
+    {
+      "path": "harmony/final-local-running.jpeg",
+      "bytes": 197123,
+      "sha256": "0621d8c2bef0c9e1683b58cc48a5b3f1a9b94d1745e5a24d352aa7a7036e2040"
+    },
+    {
+      "path": "harmony/gallery-reuse-probe.jpeg",
+      "bytes": 181699,
+      "sha256": "6d2d669b7e4c043069dd3c22633cd8d2bb45f204b7f8aa2b840517dd9c118c6f"
+    },
+    {
+      "path": "harmony/home-current-dark.jpeg",
+      "bytes": 194362,
+      "sha256": "36f2b51ff98bd4affdbbcf064dea7115d0108dbcdc67c2d3d5829cc063ad39e5"
+    },
+    {
+      "path": "harmony/home-current-light.jpeg",
+      "bytes": 197635,
+      "sha256": "3e76a3727a8b1f36e052f77e6e9a5e3a3d3de18674c26f51b932a1a18ca6408c"
+    },
+    {
+      "path": "harmony/home-empty-dark.jpeg",
+      "bytes": 179186,
+      "sha256": "f25b70969c3ffa8f8b9bdd8f4c1d46ec5cbe2fc07f9b085b48e37abd41732380"
+    },
+    {
+      "path": "harmony/home-offline-error.jpeg",
+      "bytes": 151632,
+      "sha256": "554bd055ad1293c11ac4cb136854a1684d0d43fcea32ceb6e57e19f22f2d10cb"
+    },
+    {
+      "path": "harmony/home-retry-empty-light.jpeg",
+      "bytes": 179301,
+      "sha256": "289320c81f6969382f6d70107173b6a5fe98115101421b32ec4a308dd7c579e0"
+    },
+    {
+      "path": "harmony/home-return-no-plan-popup.jpeg",
+      "bytes": 197609,
+      "sha256": "919fca29df4f23c708f81b02760139033409e648772b879af9f555f83dc02c3f"
+    },
+    {
+      "path": "harmony/home-reuse-probe.jpeg",
+      "bytes": 180265,
+      "sha256": "e4bec54b3a2cb0ef0d991f9ddc5375d8640152c1fc9e048b0032789dae28745a"
+    },
+    {
+      "path": "harmony/home-shared-baseline.jpeg",
+      "bytes": 178416,
+      "sha256": "a0fa1a68a176a2ed737aaff2370aa79c872eef1a34f63bc0dd686931928bf08a"
+    },
+    {
+      "path": "harmony/ingredient-current-dark.jpeg",
+      "bytes": 225495,
+      "sha256": "d17cfd3b8c4de832220d61814d11c6c03d26c117b0bd4aa526171552a25d8a0c"
+    },
+    {
+      "path": "harmony/ingredient-current-light.jpeg",
+      "bytes": 227335,
+      "sha256": "9ef1e5f53db4421d50090e93cc3f76dcaa974912f78b66dbf51a1f57303535b5"
+    },
+    {
+      "path": "harmony/plan-form-current-dark.jpeg",
+      "bytes": 199617,
+      "sha256": "6dc8db6fc3440282804da1bb799565b5ce856a098f21a39d83153f5dd6548ec3"
+    },
+    {
+      "path": "harmony/plan-form-current-light.jpeg",
+      "bytes": 198886,
+      "sha256": "590fbe24b381988773dad71e838c2c1c36100a8d386d15a32c2da566f90f618c"
+    },
+    {
+      "path": "harmony/plan-gate-empty-dark.jpeg",
+      "bytes": 174408,
+      "sha256": "3d3644f8825291453bcd5bb05559264c39395d1c638dfb0aba56537fdec9aaa1"
+    },
+    {
+      "path": "harmony/plan-history-empty-light.jpeg",
+      "bytes": 97965,
+      "sha256": "37a8514be6b0a9b6c2beaed0060af86061dd7922bf28c948430a6c8f6900a319"
+    },
+    {
+      "path": "harmony/plan-preview-real.jpeg",
+      "bytes": 309086,
+      "sha256": "e743cf1557f46d97dac0a3e3bee9c0237a232d2a8ab9d9243665673df4a7fed6"
+    },
+    {
+      "path": "harmony/plan-processing-final.jpeg",
+      "bytes": 97003,
+      "sha256": "77034aa73c03fea6dc0de76b0e39a4bc869c221fe8d8f5a5e98b74d789204f61"
+    },
+    {
+      "path": "harmony/product-delete-confirm.jpeg",
+      "bytes": 226412,
+      "sha256": "27cb7cdeafc7b4faf071a59c5872f7a90159ebef6c71ebaae8708f25d074baae"
+    },
+    {
+      "path": "harmony/product-upload-modal-dark.jpeg",
+      "bytes": 138143,
+      "sha256": "00110a8f5a60b95512ecaa298d1fad8bf8b4234b0b70ba90efb24a99b0e095a9"
+    },
+    {
+      "path": "harmony/profile-current-dark.jpeg",
+      "bytes": 135954,
+      "sha256": "c6363f8cacbc03692a1a93a83ce9681972878ecc4b43681181511ed1e77667a9"
+    },
+    {
+      "path": "harmony/release-login-blank.jpeg",
+      "bytes": 117672,
+      "sha256": "65b8fd1b109bba3eab3c381a4bb0bdac2d8c5d9152e65362ff1d8361ae54c35a"
+    },
+    {
+      "path": "harmony/release-login-validation.jpeg",
+      "bytes": 137444,
+      "sha256": "fd379019752c8c08f74a72859d8d294425677635c6e8acb1e6aa9608461df54c"
+    },
+    {
+      "path": "harmony/release-onboarding-01.jpeg",
+      "bytes": 185974,
+      "sha256": "ce8a1d0c50c6744cf043fa5284d5c75c02961877f10cb1f294dd96c37b8e52e4"
+    },
+    {
+      "path": "harmony/release-onboarding-02.jpeg",
+      "bytes": 185974,
+      "sha256": "ce8a1d0c50c6744cf043fa5284d5c75c02961877f10cb1f294dd96c37b8e52e4"
+    },
+    {
+      "path": "harmony/release-onboarding-03.jpeg",
+      "bytes": 204326,
+      "sha256": "bc2bddbad4cd7b39052bb3b14b0d09b6bbe8f28f02250dd97ea1a6727adc6371"
+    },
+    {
+      "path": "harmony/release-register-blank.jpeg",
+      "bytes": 169516,
+      "sha256": "6f132aaaf55456efb6d1faf3f04943a2d7e174a9af0951e440e9bb9818bc3f3b"
+    },
+    {
+      "path": "harmony/session-cold-restored.jpeg",
+      "bytes": 197484,
+      "sha256": "b8da8f35ead4e513887b87ed7325590b091b0f6180f24e94755d9e4b90e50a6b"
+    },
+    {
+      "path": "harmony/session-offline-retained.jpeg",
+      "bytes": 151489,
+      "sha256": "a6e421b2f4145f9b0777b47d4d629c9f70a6b0f86c7215b726bee18d33c0b9f1"
+    },
+    {
+      "path": "harmony/session-signed-out-cold.jpeg",
+      "bytes": 206048,
+      "sha256": "e0530c816ef138b54e58c8d8cf3ee245f74d195f93a16ad987a6be118ed486a0"
+    },
+    {
+      "path": "harmony/skin-context-current-dark.jpeg",
+      "bytes": 167127,
+      "sha256": "089c191545b80cbead4bb9af1c585b51e0a0eed95aedb546c97f6bd03339635b"
+    },
+    {
+      "path": "harmony/skin-empty-dark.jpeg",
+      "bytes": 140352,
+      "sha256": "bdc8f015dbbcf9a26bd304f80fa320172872dd37d8a22184715b62d7207653dc"
+    },
+    {
+      "path": "harmony/skin-overview-current-dark.jpeg",
+      "bytes": 193140,
+      "sha256": "d131528c2814c262eb8cbfc8c2db8d418a6417ca3d944587ab0daee11e046fa2"
+    },
+    {
+      "path": "harmony/skin-overview-current-light.jpeg",
+      "bytes": 197625,
+      "sha256": "643e06810ceab0737241ccf4f64be66cb9a20e27f266e384a9c6194369962c1f"
+    },
+    {
+      "path": "harmony/skin-report-current-dark.jpeg",
+      "bytes": 203050,
+      "sha256": "5de203cd59f7a52c83fd496977838e35659b5e0b3963ec989e2e58682f1ebf77"
+    },
+    {
+      "path": "harmony/skin-report-current-light.jpeg",
+      "bytes": 202217,
+      "sha256": "9e609478ad557706e141d64f0e478026b6abd277b045dfbb1dde05d631aabae1"
+    },
+    {
+      "path": "harmony/skin-reuse-probe.jpeg",
+      "bytes": 203994,
+      "sha256": "1889c8f1086eaa097d8d51e0d890cd744a2db9cc95d3c87dc92954402121e822"
+    },
+    {
+      "path": "harmony/system-dark-enabled.jpeg",
+      "bytes": 104700,
+      "sha256": "f1149fa9dcaa33540461adeac4572b8524610c4c09958158a8f00638f243e850"
+    },
+    {
+      "path": "harmony/system-gallery-current.jpeg",
+      "bytes": 111344,
+      "sha256": "008f6f3eeaef1bd364dfd5c1ffc80f9234548e017b854f45062e7f7ac08efa33"
+    },
+    {
+      "path": "harmony/system-light-restored.jpeg",
+      "bytes": 102327,
+      "sha256": "7b580267ec907305fb66c1ae61f0e17089a8e2dac7f7884604ca1e7b99282cc7"
+    },
+    {
+      "path": "harmony/theme-dark-hot.jpeg",
+      "bytes": 193685,
+      "sha256": "c3c28bef6ff9a6bd42850581b12577ab3c1da900fec24bfb646332c95be6a0c1"
+    },
+    {
+      "path": "harmony/theme-light-cold.jpeg",
+      "bytes": 197141,
+      "sha256": "2f52be782295f89e328f72d35eb2bf57a0f2e973a4b1e39eee39963c4b3e3652"
+    },
+    {
+      "path": "harmony/theme-light-hot-restored.jpeg",
+      "bytes": 196934,
+      "sha256": "c2766096b9cb699e61df43df53c0b40fba4eeb32101284f4ec1a381971bc1e64"
+    },
+    {
+      "path": "ios/cabinet-populated-light.png",
+      "bytes": 2903116,
+      "sha256": "94a676231cc38913e381e4218a8ebfd9c668f9a40f3d04e3cee5a4892daf9d3d"
+    },
+    {
+      "path": "ios/conflict-report-light.png",
+      "bytes": 2668967,
+      "sha256": "f4fa53f62a3f27596db0d2b423cd3785b7a0b777412080e513e6baa54a2e90ab"
+    },
+    {
+      "path": "ios/home-active-plan-checked-light.png",
+      "bytes": 3054168,
+      "sha256": "02b987af1d92a495689cf22419545e090330434cf6e3479b2688b2997bfd4d9b"
+    },
+    {
+      "path": "ios/plan-form-selected-light.png",
+      "bytes": 2804853,
+      "sha256": "58c0fbaa8a1fbf4fee951ddd4bf535f4b81ba4e9e750c67e43428831f3e2b29e"
+    },
+    {
+      "path": "ios/plan-preview-light.png",
+      "bytes": 3031178,
+      "sha256": "b63d18fba5e17800568f2285b34e12d409f6196f2984bda9f7b84385aa2c944f"
+    },
+    {
+      "path": "ios/profile-light.png",
+      "bytes": 2393371,
+      "sha256": "dec04eb228038a2a80cd00517c2695de839b9af112840ecc5ab90066858f8d4e"
+    },
+    {
+      "path": "ios/skin-overview-populated-light.png",
+      "bytes": 2696809,
+      "sha256": "268ff759f74147cd000adb392274c0a005b908db0b97573ed5f2e10c635d9ee6"
+    },
+    {
+      "path": "ios/skin-report-issues-light.png",
+      "bytes": 2704591,
+      "sha256": "0c6949ffb80174271069875e9752e6df85e79196d934bea84f3aa7f803a2ad24"
+    }
+  ]
+}

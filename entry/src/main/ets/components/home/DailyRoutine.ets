@@ -1,268 +1,61 @@
-import { PlanApiService, PlanStep } from '../plan/PlanApiService'
-
+import { AISkinButton, AISkinTabs, AISkinStateView } from '../../design/AISkinPrimitives'
+import { AISkinChecklistRow } from '../../design/AISkinJourneyComponents'
+import { AISkinTextRole, AISkinTone, AISkinSpacing, AISkinButtonVariant, AISkinButtonLayout, AISkinTabVariant, AISkinStateKind, AISkinCardRole, AISkinCardState, AISkinCardInset } from '../../design/Foundation/AISkinTokens'
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
+import { AISkinIcon } from '../../design/AISkinIcon'
+import { PlanApiService, PlanData, PlanStep, DailyProgress } from '../plan/PlanApiService'
+import { AIContentNotice } from '../common/AIContentNotice'
 @Component
 export struct DailyRoutine {
-  @Prop planId: string = ''
-  @Prop morningRoutine: RoutineItem[] = []
-  @Prop eveningRoutine: RoutineItem[] = []
-  @Prop recommendations: string[] = []
-  onRoutineUpdate?: (morning: RoutineItem[], evening: RoutineItem[], recommendations: string[]) => void
-  private planApiService: PlanApiService = PlanApiService.getInstance()
-
+  @Prop @Watch('load') plan: PlanData = {}
+  @State period: string = 'morning'
+  @State progress: DailyProgress | null = null
+  @State saving: boolean = false
+  @State error: string = ''
+  onDetails: () => void = () => {}
+  onHistory: () => void = () => {}
+  aboutToAppear() { this.load() }
+  private planId(): string { return this.plan._id || this.plan.id || '' }
+  async load(): Promise<void> {
+    const result = await PlanApiService.getInstance().getDailyProgress(this.planId())
+    this.progress = result.data?.daily || null
+    this.error = result.success ? '' : result.message || '暂时无法读取今日记录'
+  }
+  private completed(step: number): boolean {
+    const steps = this.period === 'morning' ? this.progress?.morning : this.progress?.evening
+    return steps?.find(item => item.step === step)?.completed === true
+  }
+  async toggle(step: number): Promise<void> {
+    if (this.saving) return
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
+    if (this.progress?.date !== today) { await this.load(); return }
+    this.saving = true
+    const result = await PlanApiService.getInstance().completeDailyStep(this.planId(), this.period, step, !this.completed(step))
+    if (result.success && result.data) { this.progress = result.data.daily; this.error = '' }
+    else { this.error = result.message || '保存失败，请重试' }
+    this.saving = false
+  }
   build() {
-    Column() {
-      // Section Header
+    Column({ space: AISkinSpacing.small }) {
       Row() {
-        // Icon Container with gradient background
-        Column() {
-          Text('📅')
-            .fontSize(18)
-            .fontColor(Color.White)
-        }
-        .width(36)
-        .height(36)
-        .borderRadius(18)
-        .backgroundColor('#B39DDB')
-        .justifyContent(FlexAlign.Center)
-        .margin({ right: 12 })
-
-        Text('我的护肤方案')
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#444444')
-      }
-      .width('100%')
-      .margin({ bottom: 20 })
-
-      // Routines Container
+        AISkinButton({ title: '每日护肤', textRole: AISkinTextRole.HomeHeading, tone: AISkinTone.Primary, variant: AISkinButtonVariant.Plain, layout: AISkinButtonLayout.Compact, onAction: this.onDetails })
+        Blank()
+        AISkinButton({ title: '历史', icon: 'history', textRole: AISkinTextRole.Caption, variant: AISkinButtonVariant.Plain, layout: AISkinButtonLayout.Compact, onAction: this.onHistory })
+      }.width('100%')
+      AISkinTabs({ items: ['早间','晚间'], icons: ['sun','moon'], selection: this.period === 'morning' ? 0 : 1, variant: AISkinTabVariant.Segmented, onSelect: (index: number) => { this.period = index === 0 ? 'morning' : 'evening' } })
+      if (this.error) { AISkinStateView({ title: '保存未成功', message: this.error, kind: AISkinStateKind.Error, onRetry: () => { this.load() } }) }
       Column() {
-        // Morning Routine
-        this.RoutineSection('早间护理', this.morningRoutine, 'morning')
-
-        // Evening Routine
-        this.RoutineSection('晚间护理', this.eveningRoutine, 'evening')
-
-        // Recommendations
-        if (this.recommendations && this.recommendations.length > 0) {
-          this.RecommendationsSection()
-        }
-      }
-      .width('100%')
-    }
-    .width('100%')
-    .padding(16)
-    .backgroundColor(Color.White)
-    .borderRadius(20)
-    .shadow({
-      radius: 24,
-      color: 'rgba(149, 157, 165, 0.15)',
-      offsetX: 0,
-      offsetY: 8
-    })
-    .margin({ top: 16, bottom: 16 })
-  }
-
-  @Builder
-  RoutineSection(title: string, items: RoutineItem[], period: string) {
-    Column() {
-      // Routine Header
-      Row() {
-        // Routine Icon with gradient
-        Column() {
-          Text(period === 'morning' ? '☀️' : '🌙')
-            .fontSize(16)
-            .fontColor(Color.White)
-        }
-        .width(32)
-        .height(32)
-        .borderRadius(8)
-        .backgroundColor('#B39DDB')
-        .justifyContent(FlexAlign.Center)
-        .margin({ right: 12 })
-
-        Text(title)
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#444444')
-      }
-      .width('100%')
-      .margin({ bottom: 16 })
-
-      // Routine Items
-      Column() {
-        ForEach(items, (item: RoutineItem, index: number) => {
-          Row() {
-            Text(item.completed ? '✓' : '○')
-              .fontSize(18)
-              .fontColor(item.completed ? '#9575CD' : '#9c9c9c')
-              .margin({ right: 12 })
-
-            Text(item.product || '')
-              .fontSize(15)
-              .fontColor('#444444')
-              .decoration({ type: item.completed ? TextDecorationType.LineThrough : TextDecorationType.None })
-              .opacity(item.completed ? 0.7 : 1.0)
-              .layoutWeight(1)
-          }
-          .width('100%')
-          .height(48)
-          .padding(12)
-          .backgroundColor(Color.White)
-          .borderRadius(10)
-          .margin({ bottom: 10 })
-          .onClick(() => {
-            this.toggleTask(items, index, period)
-          })
-        })
-      }
-      .width('100%')
-    }
-    .width('100%')
-    .padding(20)
-    .backgroundColor('#F9FAFB')
-    .borderRadius(16)
-    .shadow({
-      radius: 12,
-      color: 'rgba(0, 0, 0, 0.04)',
-      offsetX: 0,
-      offsetY: 4
-    })
-    .margin({ bottom: 24 })
-  }
-
-  @Builder
-  RecommendationsSection() {
-    Column() {
-      // Recommendations Header
-      Row() {
-        // Tips Icon with gradient
-        Column() {
-          Text('💡')
-            .fontSize(16)
-            .fontColor(Color.White)
-        }
-        .width(32)
-        .height(32)
-        .borderRadius(8)
-        .backgroundColor('#FFCC80')
-        .justifyContent(FlexAlign.Center)
-        .margin({ right: 12 })
-
-        Text('专业建议')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#444444')
-      }
-      .width('100%')
-      .margin({ bottom: 16 })
-
-      // Recommendations List
-      Column() {
-        ForEach(this.recommendations, (tip: string, index: number) => {
-          Row() {
-            Text('✓')
-              .fontSize(16)
-              .fontColor('#FF9800')
-              .margin({ right: 12, top: 2 })
-
-            Text(tip)
-              .fontSize(15)
-              .fontColor('#5d4037')
-              .lineHeight(22)
-              .layoutWeight(1)
-          }
-          .width('100%')
-          .padding(12)
-          .backgroundColor('rgba(255, 255, 255, 0.5)')
-          .borderRadius(10)
-          .margin({ bottom: 12 })
-        })
-      }
-      .width('100%')
-    }
-    .width('100%')
-    .padding(20)
-    .backgroundColor('#FFF8E1')
-    .borderRadius(16)
-  }
-
-  async toggleTask(routine: RoutineItem[], index: number, period: string) {
-    if (!routine[index] || !this.planId) {
-      console.warn('⚠️ 无法更新步骤：缺少必要数据')
-      return
-    }
-
-    console.log('===== ✅ 切换步骤完成状态 =====')
-    console.log(`📋 方案ID: ${this.planId}`)
-    console.log(`📋 时段: ${period}`)
-    console.log(`📋 步骤索引: ${index}`)
-    console.log(`📋 当前步骤: ${routine[index].step}`)
-    console.log(`📋 当前状态: ${routine[index].completed}`)
-
-    // 本地先切换状态
-    const newCompleted = !routine[index].completed
-    routine[index].completed = newCompleted
-
-    // 获取步骤ID
-    const stepId = routine[index].step || (index + 1)
-
-    try {
-      // 调用API更新步骤状态
-      console.log('📡 调用API更新步骤状态')
-      const response = await this.planApiService.updateStepCompleted(this.planId, {
-        period: period as 'morning' | 'evening',
-        step: stepId,
-        completed: newCompleted
+      ForEach((this.period === 'morning' ? this.plan.morning : this.plan.evening) || [], (step: PlanStep, index: number) => {
+        AISkinChecklistRow({ title: step.product || '护肤步骤', message: step.reason || '', number: index + 1,
+          isCompleted: this.completed(step.step || 0), isEnabled: !this.saving && this.progress !== null, onAction: () => { this.toggle(step.step || 0) } })
+        if (index < (((this.period === 'morning' ? this.plan.morning : this.plan.evening) || []).length - 1)) { Divider().color(AISkinColor.divider) }
       })
-
-      if (response.success && response.data && response.data.plan) {
-        const plan = response.data.plan
-        
-        console.log('✅ 步骤状态更新成功')
-        console.log('📋 更新后的方案数据已获取')
-
-        // 用后端返回的最新 plan 刷新数据
-        const updatedMorning = (plan.morning || []).map((step: PlanStep): RoutineItem => ({
-          step: step.step || 0,
-          product: step.product || '',
-          completed: step.completed || false
-        }))
-        
-        const updatedEvening = (plan.evening || []).map((step: PlanStep): RoutineItem => ({
-          step: step.step || 0,
-          product: step.product || '',
-          completed: step.completed || false
-        }))
-
-        // 通过回调更新父组件数据
-        if (this.onRoutineUpdate) {
-          this.onRoutineUpdate(updatedMorning, updatedEvening, plan.recommendations || [])
-        }
-
-        // 检查所有任务是否都完成
-        const allDone = updatedMorning.every((t: RoutineItem) => t.completed) && 
-                       updatedEvening.every((t: RoutineItem) => t.completed)
-        
-        if (allDone) {
-          console.log('🎉 所有步骤已完成！')
-        }
-      } else {
-        console.error('❌ 更新步骤状态失败:', response.message)
-        // 失败时回滚本地状态
-        routine[index].completed = !newCompleted
+      }.width('100%')
+      if (!((this.period === 'morning' ? this.plan.morning : this.plan.evening)?.length)) {
+        AISkinStateView({ title: '暂无护理步骤', message: '可以在完整护肤方案中查看安排。' })
       }
-    } catch (error) {
-      console.error('❌ 更新步骤状态异常:', JSON.stringify(error))
-      // 失败时回滚本地状态
-      routine[index].completed = !newCompleted
-    }
+      AIContentNotice({ scene: '每日护肤方案' })
+    }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Routine, AISkinCardState.Normal, AISkinCardInset.Regular))
   }
 }
-
-// Data Models
-interface RoutineItem {
-  step?: number
-  product?: string
-  completed?: boolean
-}
-

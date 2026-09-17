@@ -1,0 +1,142 @@
+{
+  "capturedAt": "2026-09-15T02:37:34.213Z",
+  "scope": "Read-only verification of disposable local frontend acceptance account. No login, AI calls, database mutations or device actions performed by this verifier.",
+  "database": "aiskin_harmony_acceptance_20260914",
+  "backend": {
+    "address": "http://127.0.0.1:5001",
+    "pid": 23970
+  },
+  "owner": {
+    "id": "6aa83874a04fc141fe906c19",
+    "disposable": true
+  },
+  "mongo": {
+    "activePlanId": "6aa83f90a04fc141fe906c1a",
+    "plan": {
+      "id": "6aa83f90a04fc141fe906c1a",
+      "origin": "ai",
+      "name": "28岁女性混合肌补水修护早晚护理方案",
+      "createdAt": "2026-09-14T18:40:16.508Z",
+      "updatedAt": "2026-09-14T18:40:16.508Z",
+      "morning": [
+        {
+          "step": 1,
+          "product": "温和氨基酸洁面"
+        },
+        {
+          "step": 2,
+          "product": "烟酰胺修护精华"
+        },
+        {
+          "step": 3,
+          "product": "轻透防晒乳 SPF50+"
+        }
+      ],
+      "evening": [
+        {
+          "step": 1,
+          "product": "温和氨基酸洁面"
+        },
+        {
+          "step": 2,
+          "product": "烟酰胺修护精华"
+        },
+        {
+          "step": 3,
+          "product": "视黄醇焕肤精华"
+        }
+      ],
+      "skinAnalysisId": "6aa83874ef25f4febe1a6f62"
+    },
+    "daily": {
+      "id": "6aa83fa2e3fa240235cfc953",
+      "planId": "6aa83f90a04fc141fe906c1a",
+      "date": "2026-09-15",
+      "timezone": "America/Chicago",
+      "steps": {
+        "morning_1": true
+      },
+      "createdAt": "2026-09-14T18:40:34.748Z",
+      "updatedAt": "2026-09-14T18:40:34.749Z"
+    }
+  },
+  "http": {
+    "active": {
+      "method": "GET",
+      "path": "/api/plans/active",
+      "status": 200,
+      "success": true,
+      "activePlanId": "6aa83f90a04fc141fe906c1a"
+    },
+    "daily": {
+      "method": "GET",
+      "path": "/api/plans/6aa83f90a04fc141fe906c1a/daily?date=2026-09-15&timezone=America%2FChicago",
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "daily": {
+            "planId": "6aa83f90a04fc141fe906c1a",
+            "date": "2026-09-15",
+            "timezone": "America/Chicago",
+            "morning": [
+              {
+                "step": 1,
+                "completed": true
+              },
+              {
+                "step": 2,
+                "completed": false
+              },
+              {
+                "step": 3,
+                "completed": false
+              }
+            ],
+            "evening": [
+              {
+                "step": 1,
+                "completed": false
+              },
+              {
+                "step": 2,
+                "completed": false
+              },
+              {
+                "step": 3,
+                "completed": false
+              }
+            ],
+            "completedCount": 1,
+            "totalCount": 6
+          }
+        }
+      }
+    },
+    "mismatchedTimezoneQueries": [
+      {
+        "method": "GET",
+        "path": "/api/plans/6aa83f90a04fc141fe906c1a/daily?date=2026-09-15&timezone=Asia%2FShanghai",
+        "status": 409,
+        "code": "DAILY_TIMEZONE_CONFLICT",
+        "message": "该日期已有其他时区的记录，请使用原时区"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plans/6aa83f90a04fc141fe906c1a/daily?date=2026-09-15&timezone=UTC",
+        "status": 409,
+        "code": "DAILY_TIMEZONE_CONFLICT",
+        "message": "该日期已有其他时区的记录，请使用原时区"
+      }
+    ]
+  },
+  "conclusions": {
+    "activePlanAdoptionPersisted": true,
+    "morningStep1Persisted": true,
+    "completedCount": 1,
+    "totalCount": 6,
+    "successfulTimezone": "America/Chicago",
+    "successfulDate": "2026-09-15",
+    "note": "Mongo records America/Chicago. Asia/Shanghai and UTC are different zones and correctly receive DAILY_TIMEZONE_CONFLICT; this is not evidence of an Etc/UTC alias issue. Device local-date and Intl-timezone agreement requires separate device verification."
+  }
+}

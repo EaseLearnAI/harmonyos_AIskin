@@ -1,357 +1,282 @@
+import { AISkinBackground, TextStyle } from '../../design/AISkinTheme'
+import { AISkinHeader, AISkinButton, AISkinField, AISkinStateView } from '../../design/AISkinPrimitives'
+import { AISkinProcessingScreen } from '../../design/AISkinProcessingScreen'
+import { AISkinSpacing, AISkinTextRole, AISkinTone, AISkinStateKind, AISkinFieldVariant } from '../../design/Foundation/AISkinTokens'
+import { AuthService } from '../../services/AuthService'
+import { SkinAnalysisApiService, SkinAnalysisData } from '../../services/SkinAnalysisApiService'
+import { AISkinReportScreen, AISkinReportFooter } from '../../design/AISkinReportComponents'
+import { AISkinPlanSourceRow, AISkinPlanGoals, AISkinPlanRequirements, AISkinPlanPersonalStates, PlanConcernOption } from '../../design/AISkinPlanInputComponents'
+import { Modal } from '../common/Modal'
 import { PersonalizedRoutinePreview } from './PersonalizedRoutinePreview'
-import { PlanApiService, PlanData, CreatePlanRequest, PlanStep } from '../plan/PlanApiService'
-import { SkinAnalysisApiService } from '../../services/SkinAnalysisApiService'
-
+import { PlanApiService, PlanData, CreatePlanRequest } from '../plan/PlanApiService'
 @Component
 export struct PersonalizedRoutineModal {
+  @Prop isAdopting: boolean = false
+  @Prop @Watch('refreshSource') sourceRevision: number = 0
+  @State latestSkinAnalysis: SkinAnalysisData | null = null
+  @State sourceLoading: boolean = false
+  @State sourceError: string = ''
+  @State showPersonalDetails: boolean = false
+  @State isInCycle: boolean = false
+  @State cycleDay: string = '1'
+  @State showsAgeEditor: boolean = false
+  @State ageDraft: string = ''
+  @State ageError: string = ''
+  @State checkingSource: boolean = false
+  registerBackHandler?: (handler: () => boolean) => void
+  onViewSkinSource?: (record: SkinAnalysisData | null) => void
+  private sourceGeneration: number = 0
   @State loadingPlan: boolean = false
-  @State planError: string | null = null
+  @State savingAge: boolean = false
+  @State operationPending: boolean = false
+  @State planError: string = ''
+  @State cancellationNotice: string = ''
   @State generatedPlan: PlanData | null = null
   @State selectedConcerns: string[] = []
   @State userAge: string = ''
   @State customRequirements: string = ''
-  private planApiService: PlanApiService = PlanApiService.getInstance()
-  private skinAnalysisApiService: SkinAnalysisApiService = SkinAnalysisApiService.getInstance()
+  private requestGeneration: number = 0
+  private isDestroyed: boolean = false
+  private authService: AuthService = AuthService.getInstance()
   onClose?: () => void
   onSaveRoutine?: (data: PlanSaveData) => void
-
-  // Predefined options
-  private skinConcerns: ConcernOption[] = [
-    { label: '补水', value: 'hydration' },
-    { label: '美白', value: 'brightening' },
-    { label: '抗老', value: 'anti-aging' },
-    { label: '控油', value: 'oil-control' },
-    { label: '修护', value: 'repair' },
-    { label: '祛痘', value: 'acne' }
-  ]
-
-  build() {
-    // Modal Overlay
-    Stack({ alignContent: Alignment.Center }) {
-      // Modal Content
-      Column() {
-        // Modal Header
-        Row() {
-          Row() {
-            Text('✨')
-              .fontSize(18)
-              .margin({ right: 8 })
-            Text('个性化护肤方案')
-              .fontSize(20)
-              .fontWeight(FontWeight.Medium)
-              .fontColor('#333333')
-          }
-          .layoutWeight(1)
-
-          Button() {
-            Text('×')
-              .fontSize(24)
-              .fontColor('#6B7280')
-          }
-          .type(ButtonType.Normal)
-          .width(36)
-          .height(36)
-          .borderRadius(18)
-          .backgroundColor('#F5F5F5')
-          .onClick(() => {
-            if (this.onClose) {
-              this.onClose()
-            }
-          })
-        }
-        .width('100%')
-        .margin({ bottom: 24 })
-        .padding({ bottom: 16 })
-        .border({
-          width: { bottom: 1 },
-          color: '#E5E7EB',
-          style: BorderStyle.Solid
-        })
-
-        if (this.loadingPlan) {
-          this.LoadingState()
-        } else if (this.planError) {
-          this.ErrorState()
-        } else if (!this.generatedPlan) {
-          this.InputState()
-        } else {
-          Column() {
-            PersonalizedRoutinePreview({ 
-              plan: this.generatedPlan,
-              onSaveRoutine: () => {
-                if (this.generatedPlan && this.onSaveRoutine) {
-                  console.log('===== 💾 保存方案到我的方案 =====')
-                  console.log('📋 方案ID:', this.generatedPlan._id || this.generatedPlan.id)
-                  console.log('📋 方案名称:', this.generatedPlan.name)
-                  
-                  // 传递完整的 PlanData，包含 planId
-                  const planSaveData: PlanSaveData = {
-                    planId: this.generatedPlan._id || this.generatedPlan.id || '',
-                    plan: this.generatedPlan
-                  }
-                  this.onSaveRoutine(planSaveData)
-                }
-              },
-              onCustomizeRoutine: () => {
-                this.generatedPlan = null
-                this.selectedConcerns = []
-                this.customRequirements = ''
-              }
-            })
-          }
-          .width('100%')
-          .layoutWeight(1)
-        }
-      }
-      .width('90%')
-      .height('75%')
-      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-      .backgroundColor(Color.White)
-      .borderRadius(20)
-      .shadow({
-        radius: 20,
-        color: 'rgba(0, 0, 0, 0.15)',
-        offsetX: 0,
-        offsetY: 10
-      })
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor('rgba(0, 0, 0, 0.5)')
-    .onClick(() => {
-      if (this.onClose) {
-        this.onClose()
-      }
-    })
+  private concerns: PlanConcernOption[] = [{label:'补水',value:'hydration'},{label:'修护',value:'repair'},{label:'控油',value:'oil-control'},{label:'抗老',value:'anti-aging'},{label:'提亮',value:'brightening'},{label:'祛痘',value:'acne'}]
+  aboutToAppear(): void {
+    this.isDestroyed = false
+    const age = this.authService.getCurrentUser()?.age
+    this.userAge = age !== undefined ? String(age) : ''
+    this.showPersonalDetails = age === undefined
+    this.registerBackHandler?.(() => this.handleNestedBack())
+    this.refreshSource()
   }
-
-  @Builder
-  LoadingState() {
-    Column() {
-      LoadingProgress()
-        .width(48)
-        .height(48)
-        .color('#F8BBD0')
-        .margin({ bottom: 16 })
-
-      Text('AI正在为您定制专属护肤方案...')
-        .fontSize(14)
-        .fontColor('#666666')
-    }
-    .width('100%')
-    .height(200)
-    .justifyContent(FlexAlign.Center)
+  aboutToDisappear(): void {
+    this.isDestroyed = true; this.requestGeneration++; this.sourceGeneration++
+    this.registerBackHandler?.(() => false)
   }
-
-  @Builder
-  ErrorState() {
-    Column() {
-      Text(this.planError || '获取失败')
-        .fontSize(14)
-        .fontColor('#d32f2f')
-        .padding(16)
-        .backgroundColor('#FFEBEE')
-        .borderRadius(12)
-    }
-    .width('100%')
-  }
-
-  @Builder
-  InputState() {
-    Scroll() {
-      Column() {
-        Text('请告诉我您的护肤需求，AI将结合您的个人信息和最新肌肤状态为您定制个性化护肤方案。')
-          .fontSize(15)
-          .fontColor('#666666')
-          .lineHeight(22)
-          .margin({ bottom: 12 })
-
-        // Age Input
-        Column() {
-          Text('年龄')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
-            .margin({ bottom: 12 })
-            .alignSelf(ItemAlign.Start)
-
-          TextInput({ placeholder: '请输入您的年龄', text: this.userAge })
-            .width('100%')
-            .height(44)
-            .borderRadius(10)
-            .backgroundColor('#F5F5F5')
-            .padding({ left: 16, right: 16 })
-            .type(InputType.Number)
-            .fontSize(15)
-            .fontColor('#333333')
-            .onChange((value: string) => {
-              this.userAge = value
-            })
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .margin({ bottom: 24 })
-
-        // Skin Concerns
-        Column() {
-          Text('护肤需求')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
-            .margin({ bottom: 12 })
-            .alignSelf(ItemAlign.Start)
-
-          Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-            ForEach(this.skinConcerns, (concern: ConcernOption) => {
-              Button(concern.label)
-                .fontSize(14)
-                .fontColor(this.selectedConcerns.includes(concern.value) ? '#F8BBD0' : '#6c757d')
-                .backgroundColor(this.selectedConcerns.includes(concern.value) ? '#FFF0F5' : '#F8F9FA')
-                .border({
-                  width: 1,
-                  color: this.selectedConcerns.includes(concern.value) ? '#F8BBD0' : '#E9ECEF',
-                  style: BorderStyle.Solid
-                })
-                .borderRadius(20)
-                .padding({ left: 16, right: 16, top: 10, bottom: 10 })
-                .margin({ right: 8, bottom: 8 })
-                .onClick(() => {
-                  this.toggleConcern(concern.value)
-                })
-            })
-          }
-          .width('100%')
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .margin({ bottom: 24 })
-
-        // Custom Requirements
-        Column() {
-          Text('其他需求（可选）')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#333333')
-            .margin({ bottom: 12 })
-            .alignSelf(ItemAlign.Start)
-
-          TextArea({ placeholder: '描述您的其他特殊需求，如敏感肌、特定产品偏好等...', text: this.customRequirements })
-            .width('100%')
-            .height(100)
-            .borderRadius(10)
-            .backgroundColor('#F5F5F5')
-            .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-            .fontSize(15)
-            .fontColor('#333333')
-            .placeholderColor('#9e9e9e')
-            .onChange((value: string) => {
-              this.customRequirements = value
-            })
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .margin({ bottom: 12 })
-
-        // Generate Button
-        Button('✨ 开始生成')
-          .width('100%')
-          .height(48)
-          .backgroundColor(this.canGenerate() ? '#F8BBD0' : '#E0E0E0')
-          .fontColor(this.canGenerate() ? Color.White : '#999999')
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .borderRadius(12)
-          .enabled(this.canGenerate())
-          .onClick(() => {
-            this.generatePersonalizedPlan()
-          })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 16 })
-    }
-    .layoutWeight(1)
-  }
-
-  toggleConcern(concern: string) {
-    const index = this.selectedConcerns.indexOf(concern)
-    if (index === -1) {
-      if (this.selectedConcerns.length < 3) {
-        this.selectedConcerns.push(concern)
-      }
-    } else {
-      this.selectedConcerns.splice(index, 1)
-    }
-  }
-
-  canGenerate(): boolean {
-    return this.userAge.length > 0 && this.selectedConcerns.length > 0
-  }
-
-  async generatePersonalizedPlan() {
-    console.log('===== 🚀 开始生成个性化护肤方案 =====')
-    this.loadingPlan = true
-    this.planError = null
-
+  private async refreshSource(): Promise<void> {
+    if (this.isDestroyed) return
+    const generation = ++this.sourceGeneration
+    const token = this.authService.getToken()
+    this.sourceLoading = true
+    this.sourceError = ''
     try {
-      // 步骤1: 准备请求数据
-      console.log('📋 步骤1: 准备请求数据')
-      const age = parseInt(this.userAge)
-      if (isNaN(age) || age <= 0) {
-        throw new Error('请输入有效的年龄')
-      }
-
-      const planRequest: CreatePlanRequest = {
-        requirement: this.customRequirements || undefined,
-        skinConcerns: this.selectedConcerns.length > 0 ? this.selectedConcerns : undefined,
-        customRequirements: this.customRequirements || undefined,
-        age: age
-      }
-
-      console.log('📊 请求参数:', {
-        年龄: age,
-        护肤关注点: this.selectedConcerns,
-        自定义需求: this.customRequirements || '无'
-      })
-
-      // 步骤2: 调用API创建方案
-      console.log('📡 步骤2: 调用API创建方案')
-      const response = await this.planApiService.createPlan(planRequest)
-
-      if (response.success && response.data && response.data.plan) {
-        console.log('✅ 方案生成成功')
-        this.generatedPlan = response.data.plan
-        this.loadingPlan = false
-        
-        console.log('🎉 方案生成流程完成！')
-        console.log('📋 生成的方案:', {
-          方案ID: this.generatedPlan._id || this.generatedPlan.id,
-          方案名称: this.generatedPlan.name,
-          早晨步骤数: this.generatedPlan.morning?.length || 0,
-          晚间步骤数: this.generatedPlan.evening?.length || 0,
-          建议数: this.generatedPlan.recommendations?.length || 0
-        })
-      } else {
-        console.error('❌ 方案生成失败:', response.message)
-        this.planError = response.message || '生成方案失败，请重试'
-        this.loadingPlan = false
-      }
+      const response = await SkinAnalysisApiService.getInstance().getAnalysisHistory(1, 1)
+      if (this.isDestroyed || generation !== this.sourceGeneration || this.authService.getToken() !== token) return
+      if (response.success) this.latestSkinAnalysis = response.data?.analyses?.[0] || null
+      else { this.latestSkinAnalysis = null; this.sourceError = response.message || '最近检测读取失败，请重试' }
     } catch (error) {
-      console.error('❌ 生成方案异常:', JSON.stringify(error))
-      const errorMessage = error instanceof Error ? error.message : '生成方案失败，请重试'
-      this.planError = errorMessage
-      this.loadingPlan = false
+      if (!this.isDestroyed && generation === this.sourceGeneration) { this.latestSkinAnalysis = null; this.sourceError = '最近检测读取失败，请检查网络后重试' }
+    } finally { if (!this.isDestroyed && generation === this.sourceGeneration) this.sourceLoading = false }
+  }
+  private sourceDetail(): string {
+    const source = this.latestSkinAnalysis
+    if (!source) return '完成肌肤检测后，为你定制更合适的护肤步骤。'
+    let skinType = source.skinType?.type || ''
+    if (!skinType) skinType = '肤质未提供'
+    const date = source.createdAt ? new Date(source.createdAt) : null
+    const dateText = date && !Number.isNaN(date.getTime()) ? `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日` : '日期未提供'
+    return `${skinType} · ${dateText}`
+  }
+  private viewSource(): void {
+    if (this.operationPending || this.sourceLoading || this.isAdopting) return
+    if (this.onViewSkinSource) this.onViewSkinSource(this.latestSkinAnalysis)
+    else this.planError = '暂时无法打开检测记录，请稍后重试'
+  }
+  private toggleConcern(value: string): void {
+    if (this.operationPending || this.isAdopting) return
+    this.selectedConcerns = this.selectedConcerns.includes(value) ? this.selectedConcerns.filter(item => item !== value) : this.selectedConcerns.length < 3 ? this.selectedConcerns.concat([value]) : this.selectedConcerns
+    this.planError = ''
+  }
+  private handleNestedBack(): boolean {
+    if (this.isAdopting || (this.showsAgeEditor && this.savingAge)) return true
+    if (this.showsAgeEditor) { this.showsAgeEditor = false; return true }
+    if (this.loadingPlan) { this.cancelGeneration(); return true }
+    if (this.generatedPlan) { this.generatedPlan = null; return true }
+    return false
+  }
+  private editAge(): void {
+    if (this.operationPending || this.isAdopting) return
+    this.ageDraft = this.userAge; this.ageError = ''; this.showsAgeEditor = true
+  }
+  private validDraftAge(): boolean { return /^\d+$/.test(this.ageDraft) && Number(this.ageDraft) >= 13 && Number(this.ageDraft) <= 120 }
+  private async saveEditedAge(): Promise<void> {
+    if (!this.validDraftAge() || this.operationPending || this.isAdopting) return
+    const token = this.authService.getToken()
+    const ownerID = this.authService.getCurrentUser()?.id
+    if (!token || !ownerID) { this.ageError = '请重新登录后保存年龄'; return }
+    const generation = ++this.requestGeneration
+    const age = Number(this.ageDraft)
+    this.savingAge = true; this.operationPending = true; this.ageError = ''
+    try {
+      const response = await this.authService.updateAge(age)
+      if (!this.isCurrent(generation)) return
+      if (this.authService.getToken() !== token || this.authService.getCurrentUser()?.id !== ownerID) {
+        this.ageError = '登录状态已变化，请重新登录后保存年龄'; return
+      }
+      if (response.success && response.user?.age === age && response.user?.id === ownerID) {
+        this.userAge = String(response.user.age); this.showsAgeEditor = false; this.planError = ''
+      } else this.ageError = response.message || '年龄未保存成功，请重试'
+    } catch (error) { if (this.isCurrent(generation)) this.ageError = '年龄保存失败，请检查网络后重试' }
+    finally { if (!this.isDestroyed) { this.operationPending = false; this.savingAge = false } }
+  }
+  private validAge(): boolean {
+    return /^\d+$/.test(this.userAge) && Number(this.userAge) >= 13 && Number(this.userAge) <= 120
+  }
+  private isCurrent(generation: number): boolean { return !this.isDestroyed && generation === this.requestGeneration }
+  private cancelGeneration(): void {
+    if (this.isAdopting) return
+    this.requestGeneration++
+    this.loadingPlan = false
+    this.savingAge = false
+    this.checkingSource = false
+    this.planError = ''
+    this.cancellationNotice = this.operationPending ? '已取消等待，上一次操作结束后可以重新尝试。' : '已取消等待。'
+  }
+  private close(): void {
+    if (this.handleNestedBack()) return
+    this.requestGeneration++
+    this.onClose?.()
+  }
+  async generate(): Promise<void> {
+    // Keep the lock until the outstanding request settles, including after Cancel.
+    // Cancelling the UI cannot undo an age update already accepted by the server.
+    if (this.operationPending || this.sourceLoading || this.isAdopting) return
+    if (!this.validAge()) { this.showPersonalDetails = true; this.planError = '请在「其他个人状态」中填写13–120的年龄'; return }
+    if (this.selectedConcerns.length === 0 || this.selectedConcerns.length > 3) {
+      this.planError = '请选择1–3项护肤目标'; return
+    }
+    if (this.isInCycle && (!/^\d+$/.test(this.cycleDay) || Number(this.cycleDay) < 1 || Number(this.cycleDay) > 7)) {
+      this.showPersonalDetails = true; this.planError = '请输入1–7的周期天数'; return
+    }
+    const token = this.authService.getToken()
+    const user = this.authService.getCurrentUser()
+    if (!token || !user?.id) { this.planError = '请重新登录后再生成方案'; return }
+    const age = Number(this.userAge)
+    const concerns = this.selectedConcerns.slice()
+    let notes = this.customRequirements.trim()
+    if (this.isInCycle) notes += (notes ? '\n' : '') + `补充个人状态：当前处于生理周期第${Number(this.cycleDay)}天。`
+    const labels = this.concerns.filter(item => concerns.includes(item.value)).map(item => item.label)
+    const generation = ++this.requestGeneration
+    this.planError = ''
+    this.cancellationNotice = ''
+    this.loadingPlan = true
+    this.operationPending = true
+    this.savingAge = user.age !== age
+    try {
+      this.checkingSource = true
+      const latest = await SkinAnalysisApiService.getInstance().getAnalysisHistory(1, 1)
+      if (!this.isCurrent(generation)) return
+      if (this.authService.getToken() !== token || this.authService.getCurrentUser()?.id !== user.id) {
+        this.planError = '登录状态已变化，请重新登录后再生成方案'; return
+      }
+      if (!latest.success) { this.planError = latest.message || '暂时无法读取最近检测，请重试'; return }
+      this.latestSkinAnalysis = latest.data?.analyses?.[0] || null
+      this.sourceError = ''
+      if (!this.latestSkinAnalysis) { this.planError = '请先完成肌肤检测，再生成护肤方案'; return }
+      this.checkingSource = false
+      if (this.savingAge) {
+        const saved = await this.authService.updateAge(age)
+        if (!this.isCurrent(generation)) return
+        const savedUser = saved.user
+        if (!saved.success || !savedUser || savedUser.age !== age || savedUser.id !== user.id) {
+          this.planError = saved.message || '年龄未保存成功，请重试'
+          return
+        }
+        this.userAge = String(savedUser.age)
+      }
+      if (!this.isCurrent(generation)) return
+      if (this.authService.getToken() !== token || this.authService.getCurrentUser()?.id !== user.id) {
+        this.planError = '登录状态已变化，请重新登录后再生成方案'
+        return
+      }
+      this.savingAge = false
+      const request: CreatePlanRequest = { age: age, skinConcerns: concerns, customRequirements: notes, requirement: labels.join('、') }
+      const result = await PlanApiService.getInstance().createPlan(request)
+      if (!this.isCurrent(generation)) return
+      if (this.authService.getToken() !== token || this.authService.getCurrentUser()?.id !== user.id) {
+        this.planError = '登录状态已变化，请重新登录后再生成方案'; return
+      }
+      if (result.success && result.data?.plan) this.generatedPlan = result.data.plan
+      else this.planError = result.message || '未能生成可用方案，请重试'
+    } catch (error) {
+      if (this.isCurrent(generation)) this.planError = this.checkingSource ? '最近检测读取失败，请检查网络后重试' : this.savingAge ? '年龄保存失败，请检查网络后重试' : '生成失败，请检查网络后重试'
+    } finally {
+      if (!this.isDestroyed) {
+        this.operationPending = false
+        if (generation !== this.requestGeneration && this.cancellationNotice) this.cancellationNotice = '已取消等待。'
+        if (this.isCurrent(generation)) { this.loadingPlan = false; this.savingAge = false; this.checkingSource = false }
+      }
     }
   }
+  @Builder
+  formHeader() {
+    AISkinHeader({ title: this.generatedPlan ? '方案预览' : '定制方案', leftIcon: 'back', onLeft: (): void => { this.close() } }).enabled(!this.isAdopting)
+  }
+  @Builder
+  formContent() {
+    if (this.generatedPlan) {
+      PersonalizedRoutinePreview({ plan: this.generatedPlan, isSaving: this.isAdopting,
+        onCustomizeRoutine: () => { if (!this.isAdopting) this.generatedPlan = null },
+        onSaveRoutine: () => { if (this.generatedPlan && !this.isAdopting) this.onSaveRoutine?.({ planId: this.generatedPlan._id || this.generatedPlan.id || '', plan: this.generatedPlan }) } })
+    } else {
+      Scroll() {
+        Column({ space: AISkinSpacing.xLarge }) {
+          Text('根据护肤柜中已有的产品，结合肌肤检测结果与护肤目标，为你安排早晚使用顺序和步骤。\n请先将正在使用的产品添加到护肤柜。')
+            .attributeModifier(new TextStyle(AISkinTextRole.Disclosure, AISkinTone.Secondary))
+          if (this.planError) { AISkinStateView({ title: '暂时无法生成方案', message: this.planError, kind: AISkinStateKind.Error }) }
+          AISkinPlanSourceRow({ title: this.sourceLoading ? '正在读取最近检测' : this.latestSkinAnalysis ? '已关联最近检测' : '先了解你的肌肤',
+            detail: this.sourceDetail(), actionTitle: this.latestSkinAnalysis ? '查看' : '去检测',
+            isEnabled: !this.sourceLoading && !this.operationPending && !this.isAdopting, onAction: (): void => { this.viewSource() } })
+          if (this.sourceError) { AISkinStateView({ title: '最近检测读取失败', message: this.sourceError, kind: AISkinStateKind.Error, onRetry: (): void => { this.refreshSource() } }) }
+          AISkinPlanGoals({ options: this.concerns, selection: this.selectedConcerns, isEnabled: !this.operationPending && !this.isAdopting,
+            onToggle: (value: string): void => { this.toggleConcern(value) } })
+          AISkinPlanRequirements({ value: this.customRequirements, isEnabled: !this.operationPending && !this.isAdopting,
+            onChange: (value: string) => { this.customRequirements = value.slice(0, 300) } })
+          AISkinPlanPersonalStates({ age: this.validAge() ? Number(this.userAge) : 0, isExpanded: this.showPersonalDetails,
+            isInCycle: this.isInCycle, cycleDay: this.cycleDay, isEnabled: !this.operationPending && !this.isAdopting,
+            onToggleExpanded: () => { this.showPersonalDetails = !this.showPersonalDetails }, onEditAge: (): void => { this.editAge() },
+            onCycleChange: (value: boolean) => { this.isInCycle = value }, onCycleDayChange: (value: string) => { this.cycleDay = value } })
+          if (this.cancellationNotice) { Text(this.cancellationNotice).attributeModifier(new TextStyle(AISkinTextRole.Caption, AISkinTone.Secondary)) }
+        }.width('100%').padding({ left: AISkinSpacing.screenEdge, right: AISkinSpacing.screenEdge, top: AISkinSpacing.medium, bottom: AISkinSpacing.xLarge })
+          .alignItems(HorizontalAlign.Start)
+      }.width('100%').height('100%').align(Alignment.Top).scrollBar(BarState.Off)
+    }
+  }
+  @Builder
+  generateButton() {
+    AISkinButton({ title: '生成我的方案', isEnabled: !this.operationPending && !this.sourceLoading && !this.isAdopting,
+      isLoading: this.operationPending, onAction: (): void => { this.generate() } })
+  }
+  @Builder
+  formFooter() {
+    if (!this.generatedPlan) { AISkinReportFooter({ content: () => { this.generateButton() } }) }
+  }
+  @Builder
+  ageEditorContent() {
+    Column({ space: AISkinSpacing.small }) {
+      Text('保存后将用于定制护肤方案，也可在个人信息中修改。').attributeModifier(new TextStyle(AISkinTextRole.ReportBody, AISkinTone.Secondary))
+      AISkinField({ value: this.ageDraft, placeholder: '请输入年龄', trailingText: '岁', inputType: InputType.Number, variant: AISkinFieldVariant.Form,
+        isLoading: this.savingAge, error: this.ageError, onChange: (value: string) => { this.ageDraft = value; this.ageError = '' } })
+      if (this.ageDraft && !this.validDraftAge()) { AISkinStateView({ title: '请检查年龄', message: '请输入13–120的整数。', kind: AISkinStateKind.Error }) }
+    }.width('100%').padding(AISkinSpacing.cardPadding).alignItems(HorizontalAlign.Start)
+  }
+  @Builder
+  ageEditorFooter() {
+    AISkinButton({ title: '保存', isLoading: this.savingAge, isEnabled: this.validDraftAge(), onAction: (): void => { this.saveEditedAge() } })
+      .padding({ left: AISkinSpacing.cardPadding, right: AISkinSpacing.cardPadding })
+  }
+  build() {
+    Stack() {
+      AISkinBackground()
+      AISkinReportScreen({ header: () => { this.formHeader() }, content: () => { this.formContent() }, footer: () => { this.formFooter() } })
+      Modal({ show: this.showsAgeEditor, title: '年龄', isBusy: this.savingAge, onClose: () => { this.showsAgeEditor = false },
+        content: () => { this.ageEditorContent() }, footer: () => { this.ageEditorFooter() } })
+      if (this.loadingPlan) {
+        AISkinProcessingScreen({ title: this.checkingSource ? '正在准备方案' : this.savingAge ? '正在保存年龄' : '定制方案',
+          message: this.checkingSource ? '正在读取最近检测' : this.savingAge ? '正在保存个人信息' : '正在生成护肤方案',
+          onCancel: (): void => { this.cancelGeneration() } })
+      }
+    }.width('100%').height('100%')
+  }
 }
-
-// Data Models
-interface ConcernOption {
-  label: string
-  value: string
-}
-
-interface PlanSaveData {
-  planId: string
-  plan: PlanData
-}
-
+interface PlanSaveData { planId: string; plan: PlanData }

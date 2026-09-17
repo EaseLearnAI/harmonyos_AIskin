@@ -18,6 +18,7 @@ export interface ProductData {
   safetyScore?: number
   efficacyScore?: number
   overallRating?: number
+  openingStatus?: string
   openingDate?: string
   createdAt?: string
   updatedAt?: string
@@ -39,6 +40,7 @@ export interface UpdateProductRequest {
   name?: string
   description?: string
   label?: string
+  openingStatus?: string
   openingDate?: string
 }
 
@@ -111,14 +113,12 @@ export class ProductApiService {
    */
   private getAuthHeaders(): Record<string, string> {
     const token = this.authService.getToken()
-    console.log(`🔑 获取Token: ${token ? '已找到' : '未找到'}`)
     if (!token) {
       console.warn('⚠️ Token为空，请求将不带认证头')
       return {}
     }
     const headers: Record<string, string> = {} as Record<string, string>
     headers['Authorization'] = `Bearer ${token}`
-    console.log(`📦 认证头: Authorization: Bearer ${token.substring(0, 20)}...`)
     return headers
   }
 
@@ -138,7 +138,6 @@ export class ProductApiService {
    */
   private async readFileAsArrayBuffer(filePath: string): Promise<ArrayBuffer> {
     try {
-      console.log(`📁 读取文件: ${filePath}`)
       const fileStat = fs.statSync(filePath)
       const fileSize = fileStat.size
       console.log(`📊 文件大小: ${fileSize} bytes`)
@@ -151,7 +150,7 @@ export class ProductApiService {
       console.log(`✅ 文件读取成功`)
       return buffer
     } catch (error) {
-      console.error('❌ 读取文件失败:', JSON.stringify(error))
+      console.error('❌ 读取文件失败')
       throw new Error(`读取文件失败: ${error}`)
     }
   }
@@ -161,9 +160,6 @@ export class ProductApiService {
    */
   async createProduct(productData: CreateProductRequest): Promise<ProductApiResponse<ProductDetailData>> {
     console.log('===== 📦 步骤1: 创建产品 =====')
-    console.log(`📋 产品名称: ${productData.name}`)
-    console.log(`📝 产品描述: ${productData.description || '无'}`)
-    console.log(`🏷️ 产品标签: ${productData.label || '无'}`)
 
     const headers = this.getAuthHeaders()
     const body: CreateProductRequest = {
@@ -185,8 +181,7 @@ export class ProductApiService {
     )
 
     if (response.success && response.data) {
-      const productId = response.data.product?._id || response.data.product?.id
-      console.log(`✅ 产品创建成功！产品ID: ${productId}`)
+      console.log('✅ 产品创建成功！')
       return {
         success: true,
         data: response.data
@@ -205,8 +200,6 @@ export class ProductApiService {
    */
   async uploadProductImage(productId: string, imagePath: string): Promise<ProductApiResponse<UploadImageData>> {
     console.log('===== 📷 步骤2: 上传产品图片 =====')
-    console.log(`🆔 产品ID: ${productId}`)
-    console.log(`📁 图片路径: ${imagePath}`)
 
     try {
       // 读取文件
@@ -265,9 +258,7 @@ export class ProductApiService {
       uploadHeaders['Content-Type'] = `multipart/form-data; boundary=${boundary}`
 
       const url = ApiConfig.getApiUrl(`/products/${productId}/upload-image`)
-      console.log(`🔗 上传URL: ${url}`)
       console.log(`📦 请求方法: POST`)
-      console.log(`📋 请求头: ${JSON.stringify(uploadHeaders)}`)
 
       const requestOptions: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
@@ -293,9 +284,8 @@ export class ProductApiService {
       try {
         const responseBody = response.result.toString()
         responseData = JSON.parse(responseBody) as ApiResponse
-        console.log(`📦 响应数据: ${JSON.stringify(responseData)}`)
       } catch (parseError) {
-        console.error('❌ 解析响应失败:', JSON.stringify(parseError))
+        console.error('❌ 解析响应失败')
         return {
           success: false,
           message: '服务器响应格式错误'
@@ -304,8 +294,7 @@ export class ProductApiService {
 
       if (response.responseCode >= 200 && response.responseCode < 300) {
         if (responseData.success) {
-          const imageUrl = responseData.data?.imageUrl
-          console.log(`✅ 图片上传成功！图片URL: ${imageUrl}`)
+          console.log('✅ 图片上传成功！')
           return {
             success: true,
             data: responseData.data || {}
@@ -325,10 +314,10 @@ export class ProductApiService {
         }
       }
     } catch (error) {
-      console.error('❌ 文件上传异常:', JSON.stringify(error))
+      console.error('❌ 文件上传异常')
       return {
         success: false,
-        message: `上传失败: ${error}`
+        message: '上传失败，请重试'
       }
     }
   }
@@ -338,7 +327,6 @@ export class ProductApiService {
    */
   async extractIngredients(productId: string): Promise<ProductApiResponse<ExtractIngredientsData>> {
     console.log('===== 🔬 步骤3: 提取产品成分 =====')
-    console.log(`🆔 产品ID: ${productId}`)
 
     const headers = this.getAuthHeaders()
     const emptyBody: Record<string, string> = {} as Record<string, string>
@@ -349,11 +337,7 @@ export class ProductApiService {
     )
 
     if (response.success && response.data) {
-      const ingredients = response.data.ingredients || []
       console.log(`✅ 成分提取成功！`)
-      console.log(`📋 产品名称: ${response.data.name || '未知'}`)
-      console.log(`📋 成分数量: ${ingredients.length}`)
-      console.log(`📋 成分列表: ${ingredients.join(', ')}`)
       return {
         success: true,
         data: response.data
@@ -372,7 +356,6 @@ export class ProductApiService {
    */
   async getUserProducts(userId: string): Promise<ProductApiResponse<ProductListData>> {
     console.log('===== 📚 加载用户产品列表 =====')
-    console.log(`📊 用户ID: ${userId}`)
 
     const headers = this.getAuthHeaders()
     const response = await this.httpService.get<ProductListData>(
@@ -402,7 +385,6 @@ export class ProductApiService {
    */
   async getProduct(productId: string): Promise<ProductApiResponse<ProductDetailData>> {
     console.log('===== 🔍 获取产品详情 =====')
-    console.log(`🆔 产品ID: ${productId}`)
 
     const headers = this.getAuthHeaders()
     const response = await this.httpService.get<ProductDetailData>(
@@ -430,7 +412,6 @@ export class ProductApiService {
    */
   async deleteProduct(productId: string): Promise<ProductApiResponse<Record<string, string>>> {
     console.log('===== 🗑️ 删除产品 =====')
-    console.log(`🆔 产品ID: ${productId}`)
 
     const headers = this.getAuthHeaders()
     const response = await this.httpService.delete<Record<string, string>>(
@@ -457,8 +438,6 @@ export class ProductApiService {
    */
   async updateProduct(productId: string, updateData: UpdateProductRequest): Promise<ProductApiResponse<ProductDetailData>> {
     console.log('===== ✏️ 更新产品 =====')
-    console.log(`🆔 产品ID: ${productId}`)
-    console.log(`📋 更新数据: ${JSON.stringify(updateData)}`)
 
     const headers = this.getAuthHeaders()
     // 转换为 Record 类型以符合 HttpService 的要求
@@ -472,6 +451,7 @@ export class ProductApiService {
     if (updateData.label !== undefined) {
       bodyRecord.label = updateData.label
     }
+    if (updateData.openingStatus !== undefined) bodyRecord.openingStatus = updateData.openingStatus
     if (updateData.openingDate !== undefined) {
       bodyRecord.openingDate = updateData.openingDate
     }
@@ -497,4 +477,3 @@ export class ProductApiService {
     }
   }
 }
-

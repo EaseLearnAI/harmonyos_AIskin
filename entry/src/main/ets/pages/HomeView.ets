@@ -1,249 +1,167 @@
+import { SkinStatusView } from './SkinStatusView'
+import { AISkinPlanContent } from '../design/AISkinPlanContent'
+import { AISkinButton, AISkinStateView } from '../design/AISkinPrimitives'
+import { Modal, AISkinModalPresentation } from '../components/common/Modal'
+import { AISkinLayout, AISkinSpacing, AISkinTextRole, AISkinStateKind, AISkinButtonVariant, AISkinButtonLayout, AISkinCardRole, AISkinCardState, AISkinCardInset } from '../design/Foundation/AISkinTokens'
+import { AISkinBackground, AISkinColor, CardStyle, TextStyle } from '../design/AISkinTheme'
 import { AppHeader } from '../components/common/AppHeader'
 import { CoreFeatures } from '../components/home/CoreFeatures'
-import { TwentyOneDayPlanCard } from '../components/home/TwentyOneDayPlanCard'
 import { DailyRoutine } from '../components/home/DailyRoutine'
 import { PersonalizedRoutineModal } from '../components/home/PersonalizedRoutineModal'
 import { PlanApiService, PlanData, PlanStep } from '../components/plan/PlanApiService'
-
+import { ProductApiService } from '../components/product/ProductApiService'
+import { SkinAnalysisApiService, SkinAnalysisData } from '../services/SkinAnalysisApiService'
+import { AuthService } from '../services/AuthService'
+import { AIContentNotice } from '../components/common/AIContentNotice'
 @Component
 export struct HomeView {
-  @State morningRoutine: RoutineItem[] = []
-  @State eveningRoutine: RoutineItem[] = []
-  @State recommendations: string[] = []
-  @State loading: boolean = false
-  @State hasPlan: boolean = false
-  @State planId: string = ''
-  @State showPersonalizedRoutineModal: boolean = false
-  private planApiService: PlanApiService = PlanApiService.getInstance()
+  @State plan: PlanData | null = null
+  @State loading: boolean = true
+  @State error: string = ''
+  @State preparing: boolean = false
+  @State creating: boolean = false
+  @State history: PlanData[] = []
+  @State showHistory: boolean = false
+  @State detail: PlanData | null = null
+  @State adopting: boolean = false
+  @State sourceReport: SkinAnalysisData | null = null
+  @State showSourceFlow: boolean = false
+  @State sourceRevision: number = 0
+  private sourceBack: (() => boolean) | undefined = undefined
+  private planBack: (() => boolean) | undefined = undefined
+  registerBackHandler?: (handler: () => boolean) => void
+  private generation: number = 0
+  private loadGeneration: number = 0
+  onProfile?: () => void
   onNavigate?: (route: string, params?: ProductViewParams) => void
-
+  @Prop openPlan: boolean = false
+  onConsumeOpenPlan?: () => void
+  onOverlay?: (value: boolean) => void
+  aboutToAppear() {
+    this.registerBackHandler?.(() => this.handleBack())
+    this.load()
+    if (this.openPlan) {
+      this.onConsumeOpenPlan?.()
+      this.prepare()
+    }
+  }
+  aboutToDisappear() { this.generation++; this.loadGeneration++; this.registerBackHandler?.(() => false); this.onOverlay?.(false) }
+  private handleBack(): boolean {
+    if (this.showSourceFlow) { if (this.sourceBack?.()) return true; this.closeSource(); return true }
+    if (this.adopting) return true
+    if (this.creating && this.planBack?.()) return true
+    if (this.creating) { this.creating = false; this.onOverlay?.(false); return true }
+    if (this.detail || this.showHistory) { this.closeHistory(); return true }
+    if (this.preparing) { this.generation++; this.preparing = false; return true }
+    return false
+  }
+  async load(): Promise<void> {
+    const request = ++this.loadGeneration
+    this.loading = true
+    this.error = ''
+    try {
+      const response = await PlanApiService.getInstance().getActivePlan()
+      if (request !== this.loadGeneration) return
+      if (!response.success || !response.data) {
+        this.error = response.message || '暂时无法获取护肤方案'
+        return
+      }
+      this.plan = response.data.plan || null
+    } catch (error) {
+      if (request === this.loadGeneration) this.error = '护肤方案加载失败，请检查网络后重试'
+    } finally {
+      if (request === this.loadGeneration) this.loading = false
+    }
+  }
+  async prepare(): Promise<void> {
+    if (this.preparing) return
+    this.preparing = true
+    const request = ++this.generation
+    const user = AuthService.getInstance().getCurrentUser()
+    const products = await ProductApiService.getInstance().getUserProducts(user?.id || '')
+    const skin = await SkinAnalysisApiService.getInstance().getAnalysisHistory(1, 1)
+    if (request !== this.generation) return
+    this.preparing = false
+    if (!products.success || !skin.success) {
+      this.error = products.message || skin.message || '无法检查准备情况，请重试'
+      return
+    }
+    const needsProducts = !(products.data?.products?.length)
+    const needsSkin = !(skin.data?.analyses?.length)
+    if (!needsProducts && !needsSkin) { this.creating = true; this.onOverlay?.(true); return }
+    AlertDialog.show({
+      title: '先准备好这两样' ,
+      message: needsProducts && needsSkin ? '添加护肤产品并完成一次肌肤检测后，就能根据你的实际情况制定方案。' : needsProducts ? '先添加护肤产品，就能用你已有的产品制定方案。' : '先完成一次肌肤检测，让方案更贴合你现在的肤况。',
+      primaryButton: { value: needsProducts ? '添加护肤品' : '检测肌肤', action: () => { this.onNavigate?.(needsProducts ? '/product' : '/skinstatus') } },
+      secondaryButton: { value: needsProducts && needsSkin ? '检测肌肤' : '稍后', action: () => { if (needsProducts && needsSkin) this.onNavigate?.('/skinstatus') } }
+    })
+  }
+  private closeSource(): void { this.sourceReport = null; this.showSourceFlow = false; this.sourceRevision++ }
+  private closeHistory(): void { if (this.adopting) return; this.detail = null; this.showHistory = false; this.onOverlay?.(false) }
+  async openHistory(): Promise<void> {
+    const request = this.generation
+    const response = await PlanApiService.getInstance().getAllPlans()
+    if (request !== this.generation) return
+    if (!response.success) { this.error = response.message || '历史方案加载失败'; return }
+    this.history = response.data?.plans || []
+    this.showHistory = true; this.onOverlay?.(true)
+  }
+  async adopt(plan: PlanData): Promise<void> {
+    if (this.adopting) return
+    this.adopting = true
+    const request = this.generation
+    const response = await PlanApiService.getInstance().adoptPlan(plan._id || plan.id || '')
+    if (request !== this.generation) return
+    this.adopting = false
+    if (!response.success) { AlertDialog.show({ title: '采用方案失败', message: response.message || '请稍后重试', primaryButton: { value: '知道了', action: () => {} } }); return }
+    this.creating = false; this.onOverlay?.(false); this.showHistory = false; this.detail = null
+    await this.load()
+  }
   build() {
     Stack() {
+      if (!this.creating && !this.showSourceFlow) {
       Column() {
-        // Header
-        AppHeader({ 
-        title: '析肤护肤助手',
-        icon: 'paw',
-        bgColor: 'bg-sakura'
+        AppHeader({ title: '首页', onProfile: this.onProfile })
+        Scroll() {
+          Column({ space: AISkinSpacing.sectionGap }) {
+            CoreFeatures({ onNavigate: this.onNavigate, onShowPersonalizedRoutineModal: () => { this.prepare() } })
+            if (this.error) { AISkinStateView({ title: '暂时无法完成', message: this.error, kind: AISkinStateKind.Error, onRetry: () => { this.load() } }) }
+            if (this.loading || this.preparing) { AISkinStateView({ title: '正在获取护肤方案', kind: AISkinStateKind.Loading }) }
+            else if (this.plan) { DailyRoutine({ plan: this.plan, onHistory: () => { this.openHistory() }, onDetails: () => { this.detail = this.plan; this.onOverlay?.(true) } }) }
+            else if (!this.error) {
+              Column({ space: AISkinSpacing.small }) {
+                Row() { Text('每日护肤').attributeModifier(new TextStyle(AISkinTextRole.HomeHeading)).layoutWeight(1); AISkinButton({ title: '历史', variant: AISkinButtonVariant.Plain, layout: AISkinButtonLayout.Compact, onAction: () => { this.openHistory() } }) }.width('100%')
+                AISkinStateView({ title: '还没有护肤计划', message: '根据护肤柜里的产品和肌肤检测结果，安排早晚护肤。' })
+                AISkinButton({ title: '创建护肤计划', onAction: () => { this.prepare() } })
+              }.width('100%').attributeModifier(new CardStyle(AISkinCardRole.Content,AISkinCardState.Normal,AISkinCardInset.Regular))
+            }
+          }.width('100%').constraintSize({ maxWidth: AISkinLayout.maxWidth }).padding({ left: AISkinSpacing.screenEdge,right: AISkinSpacing.screenEdge,top: AISkinSpacing.medium,bottom: AISkinLayout.bottomClearance })
+        }.layoutWeight(1).width('100%').scrollBar(BarState.Off).align(Alignment.Top)
+      }.width('100%').height('100%')
+      }
+      if (this.creating) { PersonalizedRoutineModal({ isAdopting: this.adopting, sourceRevision: this.sourceRevision, registerBackHandler: (handler: () => boolean) => { this.planBack = handler }, onViewSkinSource: (record: SkinAnalysisData | null) => { this.sourceReport = record; this.showSourceFlow = true }, onClose: () => { this.creating = false; this.onOverlay?.(false) }, onSaveRoutine: (data: PlanSaveData) => { this.adopt(data.plan) } }).visibility(this.showSourceFlow ? Visibility.Hidden : Visibility.Visible) }
+      Modal({ show: this.showHistory || this.detail !== null, title: this.detail ? '当前护肤方案' : '护肤方案历史', isBusy: this.adopting, presentation: AISkinModalPresentation.Reading,
+        onClose: () => { this.closeHistory() }, content: () => { this.historyContent() } })
+      if (this.showSourceFlow) {
+        Stack() {
+          AISkinBackground()
+          SkinStatusView({ initialReport: this.sourceReport, presentedAsSource: true, registerBackHandler: (handler: () => boolean) => { this.sourceBack = handler }, onBack: () => { this.closeSource() }, onCreatePlan: () => { this.closeSource() } })
+        }.width('100%').height('100%')
+      }
+    }.width('100%').height('100%')
+  }
+  @Builder
+  historyContent() {
+    Column({ space: AISkinSpacing.medium }) {
+      if (!this.detail && !this.history.length) { AISkinStateView({ title: '暂无历史方案' }) }
+      ForEach(this.detail ? [this.detail] : this.history, (plan: PlanData) => {
+        AISkinPlanContent({ plan: plan })
+        if ((plan._id || plan.id) !== (this.plan?._id || this.plan?.id)) {
+          AISkinButton({ title: '使用此方案', isLoading: this.adopting, onAction: () => { this.adopt(plan) } })
+        }
       })
-      .width('100%')
-
-      // Main Content
-      Scroll() {
-        Column() {
-          // Core Features
-          CoreFeatures({ 
-            onNavigate: (route: string, params?: ProductViewParams) => {
-              if (this.onNavigate) {
-                this.onNavigate(route, params)
-              }
-            },
-            onShowPersonalizedRoutineModal: () => {
-              this.showPersonalizedRoutineModal = true
-            }
-          })
-          .margin({ top: 14, left: 14, right: 12, bottom: 12 })
-
-          // 21 Day Plan Card
-          TwentyOneDayPlanCard()
-            .margin({ left: 14, right: 14, bottom: 4, top: 6 })
-
-          // Daily Routine
-          if (this.loading) {
-            Column() {
-              LoadingProgress()
-                .width(40)
-                .height(40)
-                .color('#F8BBD0')
-                .margin({ top: 40, bottom: 20 })
-
-              Text('加载中...')
-                .fontSize(14)
-                .fontColor('#666666')
-            }
-            .width('100%')
-            .height(200)
-            .justifyContent(FlexAlign.Center)
-          } else if (this.hasPlan) {
-            DailyRoutine({
-              planId: this.planId,
-              morningRoutine: this.morningRoutine,
-              eveningRoutine: this.eveningRoutine,
-              recommendations: this.recommendations,
-              onRoutineUpdate: (morning: RoutineItem[], evening: RoutineItem[], recommendations: string[]) => {
-                this.morningRoutine = morning
-                this.eveningRoutine = evening
-                this.recommendations = recommendations
-              }
-            })
-            .margin({ left: 12, right: 12, bottom: 12 })
-          } else {
-            Column() {
-              Text('暂无护肤计划')
-                .fontSize(18)
-                .fontColor('#888888')
-                .margin({ top: 40 })
-            }
-            .width('100%')
-            .height(200)
-            .justifyContent(FlexAlign.Center)
-          }
-        }
-        .width('100%')
-        .padding({ left: 0, right: 0, bottom: 80 })
-      }
-      .layoutWeight(1)
-      .scrollBar(BarState.Auto)
-      }
-      .width('100%')
-      .height('100%')
-      .backgroundColor('#fff9fb')
-
-      // Personalized Routine Modal - Floating on top of entire page
-      if (this.showPersonalizedRoutineModal) {
-        PersonalizedRoutineModal({
-          onClose: () => {
-            this.showPersonalizedRoutineModal = false
-          },
-          onSaveRoutine: (data: PlanSaveData) => {
-            this.handleSaveRoutine(data)
-            this.showPersonalizedRoutineModal = false
-          }
-        })
-        .width('100%')
-        .height('100%')
-        .zIndex(9999)
-      }
-    }
-    .width('100%')
-    .height('100%')
-  }
-
-  aboutToAppear() {
-    this.fetchRoutine()
-  }
-
-  async fetchRoutine() {
-    console.log('===== 📚 获取我的护肤方案 =====')
-    this.loading = true
-
-    try {
-      // 步骤1: 获取所有方案列表
-      console.log('📡 步骤1: 获取方案列表')
-      const plansResponse = await this.planApiService.getAllPlans()
-
-      if (plansResponse.success && plansResponse.data && plansResponse.data.plans && plansResponse.data.plans.length > 0) {
-        // 获取最新的方案（按创建时间排序，第一个是最新的）
-        const latestPlan = plansResponse.data.plans[0]
-        const planId = latestPlan._id || latestPlan.id || ''
-        
-        console.log('✅ 找到最新方案')
-        console.log('📋 方案ID:', planId)
-        console.log('📋 方案名称:', latestPlan.name)
-
-        // 步骤2: 获取方案详情
-        console.log('📡 步骤2: 获取方案详情')
-        const planResponse = await this.planApiService.getPlan(planId)
-
-        if (planResponse.success && planResponse.data && planResponse.data.plan) {
-          const plan = planResponse.data.plan
-          
-          // 转换数据格式
-          this.morningRoutine = (plan.morning || []).map((step: PlanStep): RoutineItem => ({
-            step: step.step || 0,
-            product: step.product || '',
-            completed: step.completed || false
-          }))
-          
-          this.eveningRoutine = (plan.evening || []).map((step: PlanStep): RoutineItem => ({
-            step: step.step || 0,
-            product: step.product || '',
-            completed: step.completed || false
-          }))
-          
-          this.recommendations = plan.recommendations || []
-          this.planId = planId
-          this.hasPlan = true
-
-          console.log('✅ 方案加载成功')
-          console.log('📊 早晨步骤数:', this.morningRoutine.length)
-          console.log('📊 晚间步骤数:', this.eveningRoutine.length)
-          console.log('📊 建议数:', this.recommendations.length)
-        } else {
-          console.warn('⚠️ 获取方案详情失败，使用列表数据')
-          // 如果获取详情失败，使用列表数据
-          this.morningRoutine = (latestPlan.morning || []).map((step: PlanStep): RoutineItem => ({
-            step: step.step || 0,
-            product: step.product || '',
-            completed: step.completed || false
-          }))
-          
-          this.eveningRoutine = (latestPlan.evening || []).map((step: PlanStep): RoutineItem => ({
-            step: step.step || 0,
-            product: step.product || '',
-            completed: step.completed || false
-          }))
-          
-          this.recommendations = latestPlan.recommendations || []
-          this.planId = planId
-          this.hasPlan = true
-        }
-      } else {
-        console.log('ℹ️ 暂无方案')
-        this.hasPlan = false
-      }
-    } catch (error) {
-      console.error('❌ 获取方案失败:', JSON.stringify(error))
-      this.hasPlan = false
-    } finally {
-      this.loading = false
-    }
-  }
-
-  handleSaveRoutine(data: PlanSaveData) {
-    console.log('===== 💾 保存方案到我的方案 =====')
-    console.log('📋 方案ID:', data.planId)
-    console.log('📋 方案名称:', data.plan.name)
-
-    const plan = data.plan
-    
-    // 转换数据格式
-    this.morningRoutine = (plan.morning || []).map((step: PlanStep): RoutineItem => ({
-      step: step.step || 0,
-      product: step.product || '',
-      completed: step.completed || false
-    }))
-    
-    this.eveningRoutine = (plan.evening || []).map((step: PlanStep): RoutineItem => ({
-      step: step.step || 0,
-      product: step.product || '',
-      completed: step.completed || false
-    }))
-    
-    this.recommendations = plan.recommendations || []
-    this.planId = data.planId
-    this.hasPlan = true
-
-    console.log('✅ 方案保存成功')
-    console.log('📊 早晨步骤数:', this.morningRoutine.length)
-    console.log('📊 晚间步骤数:', this.eveningRoutine.length)
-    console.log('📊 建议数:', this.recommendations.length)
+    }.width('100%').padding(AISkinSpacing.screenEdge)
   }
 }
-
-// Data Models
-interface RoutineItem {
-  step?: number
-  product?: string
-  completed?: boolean
-}
-
-interface PlanSaveData {
-  planId: string
-  plan: PlanData
-}
-
-interface ProductViewParams {
-  autoEnableConflictMode?: boolean
-}
-
+interface ProductViewParams { autoEnableConflictMode?: boolean }
+interface PlanSaveData { planId: string; plan: PlanData }

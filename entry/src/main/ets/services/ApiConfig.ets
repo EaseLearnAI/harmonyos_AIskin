@@ -3,6 +3,7 @@
  * 配置API服务器地址
  */
 export class ApiConfig {
+  static readonly ENABLE_COMPONENT_PREVIEW: boolean = false
   // 服务器基础URL - 从接口.md文档中获取
   private static readonly BASE_URL: string = 'https://www.lunzo.site/api'
 

@@ -14,6 +14,7 @@ export interface SkinTypeData {
  * 黑头数据接口
  */
 export interface BlackheadsData {
+  description?: string
   exists?: boolean
   severity?: string
   distribution?: string[]
@@ -23,6 +24,7 @@ export interface BlackheadsData {
  * 痘痘数据接口
  */
 export interface AcneData {
+  description?: string
   exists?: boolean
   count?: string
   types?: string[]
@@ -33,6 +35,7 @@ export interface AcneData {
  * 毛孔数据接口
  */
 export interface PoresData {
+  description?: string
   enlarged?: boolean
   severity?: string
   distribution?: string[]
@@ -111,7 +114,9 @@ export interface OverallAssessmentData {
 /**
  * 皮肤分析结果数据模型
  */
+export interface SkinContext { condition?: string; light?: string; feelings?: string[] }
 export interface SkinAnalysisData {
+  context?: SkinContext
   _id?: string
   analysisId?: string
   imageUrl?: string
@@ -210,7 +215,6 @@ export class SkinAnalysisApiService {
    */
   private getAuthHeaders(): Record<string, string> {
     const token = this.authService.getToken()
-    console.log(`🔑 获取Token: ${token ? '已找到' : '未找到'}`)
     if (!token) {
       console.warn('⚠️ Token为空，请求将不带认证头')
       return {}
@@ -218,7 +222,6 @@ export class SkinAnalysisApiService {
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`
     }
-    console.log(`📦 认证头: Authorization: Bearer ${token.substring(0, 20)}...`)
     return headers
   }
 
@@ -230,7 +233,6 @@ export class SkinAnalysisApiService {
    */
   async getAnalysisResult(analysisId: string): Promise<SkinAnalysisApiResponse<AnalysisDetailData>> {
     console.log('===== 🔍 获取分析结果 =====')
-    console.log(`🆔 分析ID: ${analysisId}`)
 
     const headers = this.getAuthHeaders()
     const response = await this.httpService.get<AnalysisDetailData>(
@@ -303,7 +305,6 @@ export class SkinAnalysisApiService {
    */
   async getAnalysisDetail(analysisId: string): Promise<SkinAnalysisApiResponse<AnalysisDetailData>> {
     console.log('===== 🔍 获取分析详情 =====')
-    console.log(`🆔 分析ID: ${analysisId}`)
 
     const headers = this.getAuthHeaders()
     const response = await this.httpService.get<AnalysisDetailData>(
@@ -313,12 +314,6 @@ export class SkinAnalysisApiService {
 
     if (response.success && response.data) {
       console.log('✅ 获取分析详情成功')
-      const analysis = response.data.analysis
-      if (analysis) {
-        console.log(`📊 健康评分: ${analysis.overallAssessment?.healthScore}`)
-        console.log(`👤 皮肤类型: ${analysis.skinType?.type}`)
-        console.log(`📅 创建时间: ${analysis.createdAt}`)
-      }
       return {
         success: true,
         data: response.data
@@ -347,12 +342,6 @@ export class SkinAnalysisApiService {
 
     if (response.success && response.data) {
       console.log('✅ 获取分析统计成功')
-      const stats = response.data.stats
-      if (stats) {
-        console.log(`📊 总分析次数: ${stats.totalAnalyses}`)
-        console.log(`📈 平均健康评分: ${stats.averageHealthScore}`)
-        console.log(`📅 最新分析时间: ${stats.latestAnalysisDate}`)
-      }
       return {
         success: true,
         data: response.data
@@ -381,12 +370,6 @@ export class SkinAnalysisApiService {
 
     if (response.success && response.data) {
       console.log('✅ 获取最新分析成功')
-      const analysis = response.data.analysis
-      if (analysis) {
-        console.log(`📊 健康评分: ${analysis.overallAssessment?.healthScore}`)
-        console.log(`👤 皮肤类型: ${analysis.skinType?.type}`)
-        console.log(`📅 创建时间: ${analysis.createdAt}`)
-      }
       return {
         success: true,
         data: response.data
@@ -405,9 +388,16 @@ export class SkinAnalysisApiService {
    * @param analysisId 分析ID
    * @returns Promise<SkinAnalysisApiResponse<Record<string, string>>>
    */
+  async updateContext(analysisId: string, context: SkinContext): Promise<SkinAnalysisApiResponse<AnalysisDetailData>> {
+    const body: Record<string, Object | string | number | boolean> = {} as Record<string, Object | string | number | boolean>
+    body.condition = context.condition || ''
+    body.light = context.light || ''
+    body.feelings = context.feelings || []
+    return this.httpService.request<AnalysisDetailData>(`/skin-analysis/${analysisId}/context`, { method: 'PATCH', body: body, headers: this.getAuthHeaders() })
+  }
+
   async deleteAnalysis(analysisId: string): Promise<SkinAnalysisApiResponse<Record<string, string>>> {
     console.log('===== 🗑️ 删除分析记录 =====')
-    console.log(`🆔 分析ID: ${analysisId}`)
 
     const headers = this.getAuthHeaders()
     const response = await this.httpService.delete<Record<string, string>>(
@@ -429,4 +419,3 @@ export class SkinAnalysisApiService {
     }
   }
 }
-

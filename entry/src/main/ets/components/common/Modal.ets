@@ -1,85 +1,39 @@
+import { AISkinColor, CardStyle } from '../../design/AISkinTheme'
+import { AISkinLayout, AISkinSpacing, AISkinCardRole } from '../../design/Foundation/AISkinTokens'
+import { AppHeader } from './AppHeader'
+export enum AISkinModalPresentation { Content, Reading }
+
 @Component
 export struct Modal {
   @Prop show: boolean = false
   @Prop title: string = ''
   @Prop showCloseButton: boolean = true
+  @Prop isBusy: boolean = false
+  @Prop presentation: AISkinModalPresentation = AISkinModalPresentation.Content
+  @BuilderParam content: () => void
+  @BuilderParam footer: () => void = this.emptyFooter
   onClose?: () => void
-
+  @Builder emptyFooter() {}
   build() {
     if (this.show) {
       Stack({ alignContent: Alignment.Center }) {
-        // Backdrop
-        Column()
-          .width('100%')
-          .height('100%')
-          .backgroundColor('rgba(0, 0, 0, 0.5)')
-          .onClick(() => {
-            if (this.onClose) {
-              this.onClose()
-            }
-          })
-
-        // Modal Content
-        Column() {
-          // Header
-          if (this.title || this.showCloseButton) {
-            Row() {
-              if (this.title) {
-                Text(this.title)
-                  .fontSize(20)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#333333')
-                  .layoutWeight(1)
-                  .textAlign(TextAlign.Center)
-              } else {
-                Blank()
-                  .layoutWeight(1)
-              }
-
-              if (this.showCloseButton) {
-                Button() {
-                  Text('✕')
-                    .fontSize(18)
-                    .fontColor('#666666')
-                }
-                .type(ButtonType.Circle)
-                .width(32)
-                .height(32)
-                .backgroundColor('#f1f1f1')
-                .onClick(() => {
-                  if (this.onClose) {
-                    this.onClose()
-                  }
-                })
-              } else {
-                Blank()
-                  .width(32)
-                  .height(32)
-              }
-            }
-            .width('100%')
-            .padding({ top: 16, bottom: 16, left: 24, right: 24 })
-          }
-
-        }
-        .width('90%')
-        .constraintSize({ maxWidth: 400, maxHeight: '90%' })
-        .backgroundColor(Color.White)
-        .borderRadius(20)
-        .shadow({
-          radius: 20,
-          color: 'rgba(0, 0, 0, 0.15)',
-          offsetX: 0,
-          offsetY: 10
-        })
-        .onClick(() => {
-          // Prevent backdrop click from closing when clicking modal content
-        })
-      }
-      .width('100%')
-      .height('100%')
-      .zIndex(10000)
+        Column().width('100%').height('100%').backgroundColor(AISkinColor.scrim)
+          .onClick(() => { if (!this.isBusy) this.onClose?.() })
+        Row() {
+        Column({ space: AISkinSpacing.small }) {
+          AppHeader({ title: this.title, showBackButton: this.showCloseButton,
+            onBack: () => { if (!this.isBusy) this.onClose?.() } })
+          if (this.presentation === AISkinModalPresentation.Reading) {
+            Scroll() { this.content() }.width('100%').layoutWeight(1).scrollBar(BarState.Auto).align(Alignment.Top)
+          } else { this.content() }
+          this.footer()
+        }.width('100%').height(this.presentation === AISkinModalPresentation.Reading ? AISkinLayout.modalMaxHeight : 'auto')
+          .constraintSize({ maxWidth: AISkinLayout.modalMaxWidth, maxHeight: AISkinLayout.modalMaxHeight })
+          .padding({ bottom: AISkinSpacing.cardPadding }).attributeModifier(new CardStyle(AISkinCardRole.Overlay))
+          .onClick(() => {})
+        }.width('100%').height(this.presentation === AISkinModalPresentation.Reading ? '100%' : 'auto')
+          .padding(AISkinSpacing.screenEdge).justifyContent(FlexAlign.Center)
+      }.width('100%').height('100%').zIndex(10000)
     }
   }
 }
-
